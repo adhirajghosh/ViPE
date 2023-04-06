@@ -3,7 +3,7 @@ Generate images for a given lyrics using latent diffusion models
 """
 import os
 
-# whcih gpu to use? if more than one
+# which gpu to use? if more than one
 os.environ['CUDA_VISIBLE_DEVICES'] = '5'
 
 from transformers import DataCollatorWithPadding
