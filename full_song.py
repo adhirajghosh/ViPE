@@ -11,13 +11,13 @@ from logger import Logger
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
-    parser.add_argument('--gpu', help='GPU id', type=int, default=1)
+    parser.add_argument('--gpu', help='GPU id', type=int, default=0)
+    parser.add_argument('--fps', help='frame rate of gif', type=float, default=12.5)
     parser.add_argument('--steps', help='number of images between two lines', type=int, default=1)
-    parser.add_argument('--song_path', help='song file path', default = './all_star_mod')
+    parser.add_argument('--song_path', help='song file path', default = './all_star_mod2')
     parser.add_argument('--concreteness_path', help='file path for concreteness score', default='/graphics/scratch2/students/ghoshadh/datasets/ac_EN_ratings/AC_ratings_google3m_koeper_SiW_fix.csv')
     parser.add_argument(
         '--embedding', help='file path for embeddings', default = '/graphics/scratch/shahmoha/checkpoints/final models/fast_text/normal_fasttext_gensim')
-        # '--resume_from', help='the checkpoint file to resume from', default = None)
     parser.add_argument('--output_dir', help='name of folder for outputs',
                         default='./results/all_star/')
     parser.add_argument('--gif', help='name of gif',
@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument('--extend', help='use prompt extend or not. Type --extend or --no-extend',default=True, action=argparse.BooleanOptionalAction)
     parser.add_argument('--lemma', help='root word for all words. Type --lemma or --no-lemma',default=True, action=argparse.BooleanOptionalAction)
     parser.add_argument('--extend_model', help='path to model extender',
-                        default='./prompt-extend')
+                        default='daspartho/prompt-extend')
 
     args = parser.parse_args()
     return args
@@ -74,7 +74,7 @@ def main():
                      )
         frame_index = new_frame_index
 
-    gif(args.output_dir, args.gif)
+    gif(args.output_dir, args.gif, args.fps)
 
 if __name__ == '__main__':
     fire.Fire(main)

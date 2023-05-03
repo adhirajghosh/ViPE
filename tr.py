@@ -104,7 +104,7 @@ names=[]
 
 
 # open the lyric file
-with open('ring_of_fire', 'r') as f:
+with open('songs/ring_of_fire', 'r') as f:
     file=f.readlines()
 
 lyrics=[l.replace('\n',' ')  for l in file if l !='\n']

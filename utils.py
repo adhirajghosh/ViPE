@@ -101,8 +101,8 @@ def change_lyric(emb_path, lyric, word_score):
     new_lyric = new_lyric[1:]
     return new_lyric
 
-def gif(result_path, output_path):
+def gif(result_path, output_path, fps):
     images = []
     for filename in os.listdir(result_path):
         images.append(imageio.imread(result_path + filename))
-    imageio.mimsave(output_path, images)
+    imageio.mimsave(output_path, images, fps = fps)
