@@ -1,6 +1,9 @@
 import os
 import json
 from tqdm import tqdm
+from utils import save_pkl,load_pkl
+
+dataset=load_pkl('dataset')
 path='/graphics/scratch2/staff/Hassan/genius_crawl/genius_data/'
 prepared=[]
 
@@ -28,11 +31,12 @@ for c, name in enumerate(tqdm(os.listdir(path))):
     name=name[:-5]
     data[name]=[]
 
-    song_data={'title':0,'lyrics':0}
 
     if len(artist_collection['songs'])>=50:
-        for song in artist_collection['songs'][0:30]:
+        for song in artist_collection['songs'][0:50]:
             if song['language']=='en':
+                song_data = {'title': 0, 'lyrics': 0}
+
                 lyrics=[i for i in song['lyrics'].split('\n')[1:] if len(i) > min_word_count]
                 #truncate the long lyrics because chatgpt gets confused
                 if len(lyrics)> max_lines:
@@ -48,5 +52,6 @@ for c, name in enumerate(tqdm(os.listdir(path))):
 
 print('processed {} number of lines from {} songs :'.format(all_lines_count,all_songs_count))
 
+save_pkl(data,'dataset')
 
 
