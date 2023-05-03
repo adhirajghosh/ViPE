@@ -8,7 +8,7 @@ path='/graphics/scratch2/staff/Hassan/genius_crawl/genius_data/'
 prepared=[]
 
 #min number of words per line
-min_word_count=3
+min_word_count=2
 # max number of lines per lyrics
 max_lines=45
 
@@ -29,15 +29,15 @@ for c, name in enumerate(tqdm(os.listdir(path))):
     with open('{}{}'.format(path,name)) as f:
        artist_collection = json.load(f)
     name=name[:-5]
-    data[name]=[]
-
 
     if len(artist_collection['songs'])>=50:
+        data[name] = []
+
         for song in artist_collection['songs'][0:50]:
             if song['language']=='en':
                 song_data = {'title': 0, 'lyrics': 0}
 
-                lyrics=[i for i in song['lyrics'].split('\n')[1:] if len(i) > min_word_count]
+                lyrics=[i for i in song['lyrics'].split('\n')[1:] if len(i.split(' ')) >= min_word_count]
                 #truncate the long lyrics because chatgpt gets confused
                 if len(lyrics)> max_lines:
                     lyrics=lyrics[0:max_lines]
@@ -50,8 +50,13 @@ for c, name in enumerate(tqdm(os.listdir(path))):
                 #add the lyric to the artist list
                 data[name].append(song_data)
 
+        #remove artist if no lyrics were added
+        if len(data[name]) < 1:
+            del data[name]
+
 print('processed {} number of lines from {} songs :'.format(all_lines_count,all_songs_count))
 
 save_pkl(data,'dataset')
+
 
 
