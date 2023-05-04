@@ -27,7 +27,7 @@ config.min_line_per_track=15
 config.min_unique_word_per_line_in_track=4
 
 # max  number of lines per lyric
-config.max_lines=50
+config.max_lines=45
 
 data={}
 all_lines_count=0
@@ -52,6 +52,9 @@ for c, name in enumerate(tqdm(os.listdir(path))):
 
                 #first check the language and make sure it contains something
                 lyrics=song['lyrics'].split('\n')[1:]
+                # check for empty spaces
+                lyrics = [line for line in lyrics if line != ' ' and line != '']
+
                 if song['language']=='en' and len(lyrics) > 1:
                     song_data = {'title': 0, 'lyrics': 0}
 
