@@ -22,7 +22,7 @@ config.min_tracks=50
 
 
 
-#lyrics should contain at least 10 lines with at least 4 unique words
+#lyrics should contain at least 15 lines with at least 4 unique words
 config.min_line_per_track=15
 config.min_unique_word_per_line_in_track=4
 
