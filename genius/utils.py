@@ -40,8 +40,8 @@ def preprocess_lyrics(lyrics,config):
       return False
 
     new_lyrics=[]
-    for line in lyrics:
 
+    for line in lyrics:
         # lets remove non ascii characters
         line=remove_non_ascii(line)
 
@@ -53,13 +53,12 @@ def preprocess_lyrics(lyrics,config):
             new_lyrics.append(line)
     lyrics=new_lyrics
 
-
    #still contain 'min_line_per_track' number of lines?
     if len(lyrics) <config.min_line_per_track:
         return False
 
     # some lyrics contain '(Verse 1)', lets remove it
-    lyrics[0] = lyrics[0].replace('(Verse 1)', ' ')
+    lyrics[0] = lyrics[0].replace('(Verse 1)', '')
 
     # truncate the long lyrics because chatgpt gets confused
     if len(lyrics) > config.max_lines:
@@ -72,8 +71,9 @@ def preprocess_lyrics(lyrics,config):
         last_word = last_line[-1].replace('Embed', '').translate(remove_digits)
         last_line[-1] = last_word
         lyrics[-1] = ' '.join(last_line)
-
-
+        #sometimes Embed is the only word
+        if lyrics[-1]==' ':
+            lyrics.pop(-1)
 
     return lyrics
 

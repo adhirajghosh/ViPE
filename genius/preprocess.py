@@ -18,8 +18,7 @@ config.max_line_length=20
 #some artist have very few english songs, so lets set a min limit for this
 config.min_en_lyrics=20
 #min number of tacks an artist must have, also number of tracks we use from each artist
-config.min_tracks=50
-
+config.min_tracks=45
 
 
 #lyrics should contain at least 15 lines with at least 4 unique words
@@ -27,7 +26,7 @@ config.min_line_per_track=15
 config.min_unique_word_per_line_in_track=4
 
 # max  number of lines per lyric
-config.max_lines=45
+config.max_lines=50
 
 data={}
 all_lines_count=0
