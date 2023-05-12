@@ -46,12 +46,13 @@ for artist in file.keys():
         prompts = [string for string in prompts if len(string) >= 3]
 
         for i in range(len(prompts)):
-            if i == 0:
-                line = lyric[i]
-            elif i == 1:
-                line = ', '.join([lyric[i - 1], lyric[i]])
-            else:
-                line = ', '.join([lyric[i - 2], lyric[i - 1], lyric[i]])
+            # if i == 0:
+            #     line = lyric[i]
+            # elif i == 1:
+            #     line = ', '.join([lyric[i - 1], lyric[i]])
+            # else:
+            #     line = ', '.join([lyric[i - 2], lyric[i - 1], lyric[i]])
+            line = lyric[i]
             my_id.append(idx)
             my_gpt_id.append(gpt_id)
             my_artist.append(artist)
