@@ -36,7 +36,7 @@ for c, name in enumerate(tqdm(os.listdir(path))):
         for song in artist_collection['songs'][0:50]:
             if song['language']=='en':
                 song_data = {'title': 0, 'lyrics': 0}
-
+                song['lyrics'] = song['lyrics'].replace('\n\n', '\n \n')
                 lyrics=[i for i in song['lyrics'].split('\n')[1:] if len(i.split(' ')) >= min_word_count]
                 #truncate the long lyrics because chatgpt gets confused
                 if len(lyrics)> max_lines:

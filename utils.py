@@ -106,3 +106,4 @@ def gif(result_path, output_path, fps):
     for filename in os.listdir(result_path):
         images.append(imageio.imread(result_path + filename))
     imageio.mimsave(output_path, images, fps = fps)
+

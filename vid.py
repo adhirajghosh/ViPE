@@ -103,6 +103,43 @@ def slerp(t, v0, v1, DOT_THRESHOLD=0.9995):
 
     return v2
 
+def create_image(prompts=["man day phoned someone"],  # prompts to dream about
+        seeds=100,
+        gpu=1,  # id of the gpu to run on
+        name='all-star-L1-3',  # name of this project, for the output directory
+        rootdir='./results',
+        num_steps=100,  # number of steps between each pair of sampled points
+        frame_index = 0,
+        # --------------------------------------
+        # args you probably don't want to change
+        num_inference_steps=100,
+        guidance_scale=7.5,
+        eta=0.0,
+        width=512,
+        height=512,
+        # --------------------------------------
+):
+    assert len(prompts) == len(seeds)
+    assert torch.cuda.is_available()
+    assert height % 8 == 0 and width % 8 == 0
+
+    outdir = rootdir
+    os.makedirs(outdir, exist_ok=True)
+
+    pipe = StableDiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5")
+    pipe = pipe.to("cuda")
+
+    prompt = prompts[0]
+    image = pipe(prompt).images[0]
+
+    image.save("astronaut_rides_horse.png")
+    outpath = os.path.join(outdir, 'frame%06d.jpg' % frame_index)
+    image.save(outpath)
+    frame_index+=1
+
+    return frame_index
+
+
 
 def create_video(
         # --------------------------------------
@@ -138,7 +175,7 @@ def create_video(
     os.makedirs(outdir, exist_ok=True)
 
     # # init all of the models and move them to a given GPU
-    pipe = StableDiffusionPipeline.from_pretrained("CompVis/stable-diffusion-v1-4")
+    pipe = StableDiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5")
     kw_model = KeyBERT()
 
     torch_device = f"cuda:{gpu}"
@@ -203,6 +240,7 @@ def create_video(
                 image = diffuse(pipe, cond_embedding, init, num_inference_steps, guidance_scale, eta)
 
             im = Image.fromarray(image)
+            # outpath = os.path.join(outdir, 'frame%06d.jpg' % 0)
             outpath = os.path.join(outdir, 'frame%06d.jpg' % frame_index)
             im.save(outpath)
             frame_index += 1
