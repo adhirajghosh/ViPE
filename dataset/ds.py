@@ -38,7 +38,7 @@ for artist in file.keys():
         gpt_id = gpt['id'].split('chatcmpl-')[1]
         prompts = gpt['choices'][0]['message']['content'].split('\n')
 
-        # Section for debugging
+        # Section for debugging. There should be a lot.
         # 1. Removing cases where prompts are nonsensical. I chose 3 because by definition, the shortest line prompt has a number from 0-9 followed by '. ', so 3 characters.
         # 2. TODO: Fix case where there are more prompts than lyrics
         while prompts[0].startswith('1. ') == False:
