@@ -20,7 +20,7 @@ def parse_args():
 	)
 
 	parser.add_argument(
-		"--genius_token", type=str, default='?'
+		"--genius_token", type=str, default='o5mChzgh6fIW4cQLYqhtDPf0NmuctbmfD5Cld7oRnkn7F-nS2Q0556m3qPuS1yd5'
 	)
 	args = parser.parse_args()
 	return args
@@ -39,13 +39,13 @@ def artists_all(show_url=False):
 		artists_out += [link['href'] for link in artists]
 	return artists_out
 
+#remove France gall, the process stuck at this point
 
 def main():
 
 	args = parse_args()
-  
-  # the process freezes for this artist
-	to_remove=['France gall']
+
+	to_remove=['France gall', 'Ennio morricone']
 	myToken = args.genius_token
 	path = args.path
 	# get all the artists name

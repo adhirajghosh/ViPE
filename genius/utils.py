@@ -21,7 +21,6 @@ class dotdict(dict):
 
 
 
-
 def remove_non_ascii(a_str):
     ascii_chars = set(string.printable)
 
@@ -44,6 +43,9 @@ def preprocess_lyrics(lyrics,config):
     for line in lyrics:
         # lets remove non ascii characters
         line=remove_non_ascii(line)
+
+        if 'You might also like' in line:
+            line=line.replace('You might also like',' ')
 
         line_len_unique = len(np.unique(line.split(' ')))
         line_len = len(line.split(' '))
@@ -76,4 +78,3 @@ def preprocess_lyrics(lyrics,config):
             lyrics.pop(-1)
 
     return lyrics
-
