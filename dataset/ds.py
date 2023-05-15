@@ -4,7 +4,11 @@ import csv
 import numpy as np
 import json
 import yaml
+import re
 
+def starts_with_1_to_50(string):
+    regex = r"^(?:[1-9]|[1-4]\d|50)"
+    return bool(re.match(regex, string))
 
 lyric_path='/graphics/scratch2/staff/Hassan/genius_crawl/'
 prompt_path = '/graphics/scratch2/staff/Hassan/chatgpt_data/'
@@ -22,9 +26,7 @@ my_song = []
 my_lyric = []
 my_prompt = []
 idx = 1
-
 for artist in file.keys():
-
     for songs in range(len(file[artist])):
 
         full_song = file[artist][songs]['title']
@@ -48,17 +50,12 @@ for artist in file.keys():
         # 1. Removing cases where prompts are nonsensical. I chose 3 because by definition, the shortest line prompt has a number from 0-9 followed by '. ', so 3 characters.
         # 2. Fix case where there are more prompts than lyrics
         # 3. Exclude songs that were not processed
+        # 4. If there exist lines that aren't part of the song at the end
 
-        # 3
-        if prompts == []:
+        prompts = [x for x in prompts if starts_with_1_to_50(x) == True]
+
+        if not prompts:
             continue
-
-        else:
-            # 2
-            while prompts[0].startswith('1. ') == False:
-                prompts = prompts[1:]
-            # 1
-            prompts = [string for string in prompts if len(string) >= 3]
 
         for i in range(min(len(prompts), len(lyric))):
             line = lyric[i]
