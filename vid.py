@@ -132,7 +132,7 @@ def create_image(prompts=["man day phoned someone"],  # prompts to dream about
     prompt = prompts[0]
     image = pipe(prompt).images[0]
 
-    image.save("astronaut_rides_horse.png")
+    # image.save("astronaut_rides_horse.png")
     outpath = os.path.join(outdir, 'frame%06d.jpg' % frame_index)
     image.save(outpath)
     frame_index+=1
