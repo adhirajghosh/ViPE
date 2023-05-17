@@ -7,7 +7,11 @@ from utils import load_pkl
 
 data=load_pkl('/graphics/scratch2/staff/Hassan/genius_crawl/dataset_50')
 
-for i in range(50):
+valid_pairs=0
+for i in range(100):
+
+    if valid_pairs ==30:
+        break
 
     paths = [ '/graphics/scratch2/staff/Hassan/chatgpt_data_v2.0/',
              '/graphics/scratch2/staff/Hassan/chatgpt_data_v3.0/']
@@ -37,6 +41,7 @@ for i in range(50):
 
 
     if valid:
+        valid_pairs +=1
 
         index=random.choice(range(len(responses[0])-4))
 
@@ -45,10 +50,10 @@ for i in range(50):
             prompt=v[index + 3]+ '\n\n\n'
             context='\n'.join(random_track_lyrics[index:index + 4])
             scrap=prompt+ context
-            if k==0:
-                f=open('lyrics_v{}.0/'.format(),'w')
-                f.write(scrap)
-                f.close()
+
+            f=open('lyrics_v{}.0/{}'.format(k+2,valid_pairs),'w')
+            f.write(scrap)
+            f.close()
 
         #     print('v_', k+2, ': [',random_track_lyrics[index],']: [', v[index+3],']' )
         # print(' ')
