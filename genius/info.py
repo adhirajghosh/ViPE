@@ -3,7 +3,8 @@ import numpy as np
 import random
 
 max_lines=50
-data=load_pkl('dataset_'+str(max_lines))
+path_out='/graphics/scratch2/staff/Hassan/genius_crawl/'
+data=load_pkl(path_out+'dataset_'+str(max_lines))
 
 print('number of artists: ',len(data))
 
@@ -12,7 +13,7 @@ lines_count=0
 lengths=[]
 
 for name, songs in data.items():
-    if len(songs)>=10:
+    if len(songs)>=15:
         choice=random.randint(1, 5)
         # if choice==1:
         #     print('[ ', songs[1]['lyrics'][0] + "--" +  songs[1]['lyrics'][1] + "--" +  songs[1]['lyrics'][2], ' ]')
@@ -23,11 +24,11 @@ for name, songs in data.items():
             ll = len(song['lyrics'])
             lengths.append(ll)
             if ll>max_lines:
-                print('oops')
-            if ll < 15:
-                print('oops')
+                print('oops1')
+            if ll < 14:
+                print('oops2')
             if max_l>20:
-                print('oops')
+                print('oops3')
             # if min_l < 2:
             #     singl_words +=1
     else:
