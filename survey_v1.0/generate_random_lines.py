@@ -51,7 +51,8 @@ for i in range(100):
             context='\n'.join(random_track_lyrics[index:index + 4])
             scrap=prompt+ context
 
-            f=open('lyrics_v{}.0/{}'.format(k+2,valid_pairs),'w')
+            f = open('temp_{}/{}'.format(k + 2, valid_pairs), 'w')
+            #f=open('templyrics_v{}.0/{}'.format(k+2,valid_pairs),'w')
             f.write(scrap)
             f.close()
 

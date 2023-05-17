@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="bd58e52c-9a56-411d-92e8-268f0962c7c1" name="Changes" comment="create directories">
+    <list default="true" id="bd58e52c-9a56-411d-92e8-268f0962c7c1" name="Changes" comment="generating random lines completed">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/survey.py" beforeDir="false" afterPath="$PROJECT_DIR$/survey.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/survey_v1.0/generate_random_lines.py" beforeDir="false" afterPath="$PROJECT_DIR$/survey_v1.0/generate_random_lines.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/survey_v1.0/lyrics_v2.0/.gitkeep" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/survey_v1.0/lyrics_v3.0/.gitkeep" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -177,7 +177,14 @@
       <option name="project" value="LOCAL" />
       <updated>1684327900342</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="generating random lines completed">
+      <created>1684328544564</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1684328544564</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -197,7 +204,8 @@
     <MESSAGE value="rename" />
     <MESSAGE value="randomly select tracks from random artists" />
     <MESSAGE value="create directories" />
-    <option name="LAST_COMMIT_MESSAGE" value="create directories" />
+    <MESSAGE value="generating random lines completed" />
+    <option name="LAST_COMMIT_MESSAGE" value="generating random lines completed" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

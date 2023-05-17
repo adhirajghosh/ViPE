@@ -27,7 +27,7 @@ def create_image(prompts=["man day phoned someone"],  # prompts to dream about
     outdir = rootdir
     os.makedirs(outdir, exist_ok=True)
 
-    pipe = StableDiffusionPipeline.from_pretrained("./stable-diffusion-v1-5")
+    pipe = StableDiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5")
     pipe = pipe.to("cuda")
 
     prompt = prompts[0]
