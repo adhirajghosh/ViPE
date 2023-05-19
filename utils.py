@@ -4,8 +4,9 @@ import sys
 import imageio
 import os
 import spacy
+from moviepy.editor import VideoFileClip, concatenate_videoclips
 
-def song_to_list(path, lemma):
+def song_to_list(path, lemma=False):
     # with open(path) as f:
     #     lines = f.readlines()
     # lines.append('\n')
@@ -107,3 +108,23 @@ def gif(result_path, output_path, fps):
         images.append(imageio.imread(result_path + filename))
     imageio.mimsave(output_path, images, fps = fps)
 
+def merge_mp4(folder_path, output_path):
+
+    # Get the list of MP4 files in the folder
+    file_list = os.listdir(folder_path)
+    file_list = [file for file in file_list if file.endswith('.mp4')]
+
+    # Create a list to store the video clips
+    video_clips = []
+
+    # Iterate over the MP4 files and load them as video clips
+    for file in file_list:
+        file_path = os.path.join(folder_path, file)
+        video_clip = VideoFileClip(file_path)
+        video_clips.append(video_clip)
+
+    # Concatenate the video clips into a single video
+    final_video = concatenate_videoclips(video_clips)
+
+    # Write the final merged video to the output file
+    final_video.write_videofile(output_path, codec='libx264')

@@ -27,7 +27,7 @@ def create_image(prompts=["man day phoned someone"],  # prompts to dream about
     outdir = rootdir
     os.makedirs(outdir, exist_ok=True)
 
-    pipe = StableDiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5")
+    pipe = StableDiffusionPipeline.from_pretrained("./stable-diffusion-v1-5")
     pipe = pipe.to("cuda")
 
     prompt = prompts[0]
@@ -51,25 +51,27 @@ for i, x in enumerate(os.listdir(path1)):
     with open(os.path.join(path2,x)) as g:
         lines2 = g.readlines()[0].split('. ')[1][:-2]
 
-    print(lines1)
-    print(lines2)
-    print()
 
-    if elements[int(x)-1] == 0:
+
+    # if elements[int(x)-1] == 0:
+    if int(x) == 9:
         lines1 = text_pipe(lines1 + ',', num_return_sequences=1)[0]["generated_text"]
         lines2 = text_pipe(lines2 + ',', num_return_sequences=1)[0]["generated_text"]
+        print(lines1)
+        print(lines2)
+        print()
         create_image(prompts = [lines1],
                      rootdir = path1,
                      name = x+'_extend')
-        create_image(prompts = [lines2],
-                     rootdir = path2,
-                     name = x+'_extend')
+        # create_image(prompts = [lines2],
+        #              rootdir = path2,
+        #              name = x+'_extend')
 
-    elif elements[int(x)-1] == 1:
-        create_image(prompts = [lines1],
-                     rootdir = path1,
-                     name = x)
-        create_image(prompts = [lines2],
-                     rootdir = path2,
-                     name = x)
+    # elif elements[int(x)-1] == 1:
+    #     create_image(prompts = [lines1],
+    #                  rootdir = path1,
+    #                  name = x)
+    #     create_image(prompts = [lines2],
+    #                  rootdir = path2,
+    #                  name = x)
 
