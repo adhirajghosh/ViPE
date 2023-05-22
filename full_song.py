@@ -12,7 +12,7 @@ from logger import Logger
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
     parser.add_argument('--gpu', help='GPU id', type=int, default=0)
-    parser.add_argument('--fps', help='frame rate of gif', type=float, default=12.5)
+    parser.add_argument('--fps', help='frame rate of gif', type=float, default=10)
     parser.add_argument('--steps', help='number of images between two lines', type=int, default=1)
     parser.add_argument('--song_path', help='song file path', default = './all_star_mod2')
     parser.add_argument('--concreteness_path', help='file path for concreteness score', default='/graphics/scratch2/students/ghoshadh/datasets/ac_EN_ratings/AC_ratings_google3m_koeper_SiW_fix.csv')
