@@ -130,7 +130,7 @@ class Model:
                            fps=2,
                            use_cf_attn=True,
                            use_motion_field=True,
-                           smooth_bg=False,
+                           smooth_bg=False, #TODO: CHANGE TO TRUE
                            smooth_bg_strength=0.4,
                            path=None):
         print("Module Text2Video")
@@ -148,7 +148,7 @@ class Model:
         self.generator.manual_seed(seed)
 
         added_prompt = "high quality, HD, 32K, trending on artstation, high focus, dramatic lighting, ultra-realistic, DSLR photography"
-        negative_prompts = 'longbody, lowres, bad anatomy, bad hands, missing fingers, extra digit, fewer difits, cropped, worst quality, low quality, deformed body, bloated, ugly, unrealistic, nude, naked'
+        negative_prompts = 'text, worst quality, blurry, morbid, longbody, lowres, bad anatomy, bad hands, missing fingers, extra digit, cropped, low quality, deformed body, bloated, ugly, unrealistic, nude, naked'
 
         prompt = prompt.rstrip()
         if len(prompt) > 0 and (prompt[-1] == "," or prompt[-1] == "."):

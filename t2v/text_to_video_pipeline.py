@@ -246,7 +246,7 @@ class TextToVideoPipeline(StableDiffusionPipeline):
             int, int, torch.FloatTensor], None]] = None,
         callback_steps: Optional[int] = 1,
         use_motion_field: bool = True,
-        smooth_bg: bool = False,
+        smooth_bg: bool = True,
         smooth_bg_strength: float = 0.4,
         t0: int = 44,
         t1: int = 47,
