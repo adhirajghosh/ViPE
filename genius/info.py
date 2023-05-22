@@ -39,3 +39,21 @@ print('total lines: ', sum(lengths))
 print('mean , std  lines per track: ', np.mean(lengths), ' ', np.std(lengths))
 print('min , max  lines per track: ', np.min(lengths), ' ', np.max(lengths))
 # print(singl_words)
+
+long_name_count=0
+for name in data.keys():
+
+    if len(name.split(' '))>15:
+        long_name_count +=1
+
+    for song in data[name]:
+        if len(song['title'].split(' ')) > 15:
+            long_name_count +=1
+        if '/' in song['title']:
+            long_name_count +=1
+
+    if '/' in name:
+        long_name_count += 1
+
+print('number of bad name or title', long_name_count)
+

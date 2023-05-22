@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="bd58e52c-9a56-411d-92e8-268f0962c7c1" name="Changes" comment="generating random lines completed">
+    <list default="true" id="bd58e52c-9a56-411d-92e8-268f0962c7c1" name="Changes" comment="get the results of the survey wihtout unzipping">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/survey.py" beforeDir="false" afterPath="$PROJECT_DIR$/survey.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/survey_v1.0/generate_random_lines.py" beforeDir="false" afterPath="$PROJECT_DIR$/survey_v1.0/generate_random_lines.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/chatgpt/build.py" beforeDir="false" afterPath="$PROJECT_DIR$/chatgpt_run/build.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/chatgpt/system_role" beforeDir="false" afterPath="$PROJECT_DIR$/chatgpt_run/system_role" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/chatgpt/token_count.py" beforeDir="false" afterPath="$PROJECT_DIR$/chatgpt_run/token_count.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/chatgpt/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/chatgpt_run/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/genius/build_dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/genius/build_dataset.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/genius/info.py" beforeDir="false" afterPath="$PROJECT_DIR$/genius/info.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/genius/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/genius/utils.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -39,7 +44,28 @@
     &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
 }</component>
-  <component name="RunManager" selected="Python.generate_random_lines">
+  <component name="RunManager" selected="Python.analysis">
+    <configuration name="analysis" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="SongAnimator" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/survey_v1.0" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/survey_v1.0/analysis.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="build_dataset" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="SongAnimator" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -126,10 +152,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.generate_random_lines" />
-        <item itemvalue="Python.full_song" />
+        <item itemvalue="Python.analysis" />
         <item itemvalue="Python.info" />
         <item itemvalue="Python.build_dataset" />
+        <item itemvalue="Python.generate_random_lines" />
+        <item itemvalue="Python.full_song" />
       </list>
     </recent_temporary>
   </component>
@@ -184,7 +211,28 @@
       <option name="project" value="LOCAL" />
       <updated>1684328544564</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="update some lines">
+      <created>1684337310760</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1684337310760</updated>
+    </task>
+    <task id="LOCAL-00008" summary="get the results of the survey">
+      <created>1684399625105</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1684399625105</updated>
+    </task>
+    <task id="LOCAL-00009" summary="get the results of the survey wihtout unzipping">
+      <created>1684410005406</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1684410005406</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -205,7 +253,10 @@
     <MESSAGE value="randomly select tracks from random artists" />
     <MESSAGE value="create directories" />
     <MESSAGE value="generating random lines completed" />
-    <option name="LAST_COMMIT_MESSAGE" value="generating random lines completed" />
+    <MESSAGE value="update some lines" />
+    <MESSAGE value="get the results of the survey" />
+    <MESSAGE value="get the results of the survey wihtout unzipping" />
+    <option name="LAST_COMMIT_MESSAGE" value="get the results of the survey wihtout unzipping" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -214,6 +265,11 @@
           <url>file://$PROJECT_DIR$/full_song.py</url>
           <line>70</line>
           <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/genius/info.py</url>
+          <line>14</line>
+          <option name="timeStamp" value="16" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

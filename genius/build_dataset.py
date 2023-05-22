@@ -2,7 +2,7 @@ import os
 import json
 from tqdm import tqdm
 from utils import save_pkl, dotdict
-from utils import preprocess_lyrics
+from utils import preprocess_lyrics,preprocess_name_and_title
 from string import digits
 
 remove_digits = str.maketrans('', '', digits)
@@ -37,7 +37,9 @@ all_songs_count=0
 corrupted_files=['Lit genius']
 skipped_tracks=0
 
+
 for c, name in enumerate(tqdm(os.listdir(path))):
+
 
     with open('{}{}'.format(path,name)) as f:
        artist_collection = json.load(f)
@@ -45,6 +47,7 @@ for c, name in enumerate(tqdm(os.listdir(path))):
 
     #some files contain garbage
     if name not in corrupted_files:
+        name = preprocess_name_and_title(name)
 
         if len(artist_collection['songs']) >= config.min_tracks:
             data[name] = []
@@ -65,7 +68,9 @@ for c, name in enumerate(tqdm(os.listdir(path))):
                     if lyrics:
                         all_songs_count +=1
                         all_lines_count += len(lyrics)
-                        song_data['title']=song['full_title']
+
+                        title=song['full_title']
+                        song_data['title']=preprocess_name_and_title(title)
                         song_data['lyrics'] =lyrics
 
                         #add the lyric to the artist list

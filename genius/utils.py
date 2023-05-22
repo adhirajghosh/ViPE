@@ -4,6 +4,16 @@ import string
 from string import digits
 remove_digits = str.maketrans('', '', digits)
 
+
+def preprocess_name_and_title(text):
+    """
+    remove / from tha path and shorten the title if needed
+    """
+    text= text.replace('/','-')
+    if len(text.split(' ')) > 15:
+        text = ' '.join(text.split(' ')[0:15])
+    return text
+
 def save_pkl(file,name):
     with open(name+'.pickle', 'wb') as handle:
         pickle.dump(file, handle, protocol=pickle.HIGHEST_PROTOCOL)
