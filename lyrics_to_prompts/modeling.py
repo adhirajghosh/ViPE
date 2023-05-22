@@ -9,10 +9,17 @@ from torch.optim import AdamW
 class GPT2Convertor(pl.LightningModule):
     def __init__(self, hparams):
         super(GPT2Convertor, self).__init__()
+        self.save_hyperparameters()
+
         self.hparams = hparams
         self.model = GPT2LMHeadModel.from_pretrained(self.hparams.model_name)
         self.tokenizer = GPT2Tokenizer.from_pretrained(self.hparams.model_name)
         self.tokenizer.pad_token = self.tokenizer.eos_token
+        self.context_length=hparams.context_length
+        self.batch_size=hparams.batch_size
+        self.lr=hparams.learning_rate
+
+
         #tokenizer([tokenizer.eos_token+ 'hello' + tokenizer.eos_token],['how are you?' + tokenizer.eos_token],padding=True,return_token_type_ids=True,return_tensor=True)
 
     def forward(self, batch):
@@ -29,6 +36,7 @@ class GPT2Convertor(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         outputs = self(batch)
         loss = outputs.loss
+        return loss
 
     def validation_step(self, batch, batch_idx):
         loss = self(batch).loss
@@ -36,11 +44,7 @@ class GPT2Convertor(pl.LightningModule):
         self.log("val_loss", loss, on_epoch=True, prog_bar=True, logger=True)
 
     def configure_optimizers(self):
-        if self.encoder_freeze:
-            optimizer = AdamW(self.model.decoder.parameters(), lr=self.learning_rate)
-        else:
-            optimizer = AdamW(self.model.parameters(), lr=self.learning_rate)
-
+        optimizer = AdamW(self.model.parameters(), lr=self.lr)
         return optimizer
 
         ####################
