@@ -70,17 +70,17 @@ for artist,songs  in tqdm(file.items()):
                 my_id.append(idx)
                 my_gpt_id.append(gpt_id)
                 my_artist.append(artist)
-                my_song.append(full_title)
+                my_song.append(full_title.split('by\xa0')[0])
                 my_lyric.append(line)
                 my_prompt.append(prompts[i].split('.')[1])
                 idx = idx + 1
 
-lyric_prompt['id'] = my_id
-lyric_prompt['gpt_id'] = my_gpt_id
-lyric_prompt['artist'] = my_artist
-lyric_prompt['song'] = my_song
-lyric_prompt['lyric'] = my_lyric
-lyric_prompt['prompt'] = my_prompt
+lyric_prompt['ids'] = my_id
+lyric_prompt['gpt_ids'] = my_gpt_id
+lyric_prompt['artists'] = my_artist
+lyric_prompt['titles'] = my_song
+lyric_prompt['lyrics'] = my_lyric
+lyric_prompt['prompts'] = my_prompt
 
 keys = lyric_prompt.keys()
 with open(ds_path, "w") as outfile:
