@@ -24,8 +24,8 @@ class Dataset(Dataset):
         self.ids_2_sample={k:v for k,v in zip(self.keys,values)}
 
         if not training:
-            vali_index=int(.10 * len(self.ids_2_sample))
-            self.keys = list(self.ids_2_sample.keys())[0:vali_index]
+            valid_index=int(.10 * len(self.ids_2_sample))
+            self.keys = list(self.ids_2_sample.keys())[0:valid_index]
 
     def __len__(self):
         return len(self.keys)
