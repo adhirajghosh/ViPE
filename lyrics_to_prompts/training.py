@@ -75,8 +75,8 @@ def main():
     # model.load_state_dict(checkpoint['state_dict'])
     # print('checkpoint loaded')
 
-    trainer=Trainer(accelerator='gpu', devices='0,1,2', callbacks=[checkpoint_callback, early_stop], logger=tb_logger,max_epochs=max_epochs,strategy='ddp')
-    #trainer = Trainer(accelerator='gpu', devices=1, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,    max_epochs=max_epochs)
+    #trainer=Trainer(accelerator='gpu', devices='0,1,2', callbacks=[checkpoint_callback, early_stop], logger=tb_logger,max_epochs=max_epochs,strategy='ddp')
+    trainer = Trainer(accelerator='gpu', devices=1, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,    max_epochs=max_epochs)
 
     trainer.fit(model)
 

@@ -80,3 +80,5 @@ class ContextAwareDataCollator:
 #
 # for batch in train_dataloader:
 #     print(batch)
+# "You and I will never be the same ; I thought you have learned your lesson by now ; You can hide, and say you're not to blame ; You say you try, but you never change ; You and I will never be the same ; You say you try, but you never change"
+# ' A person tied up in chains, struggling to break free'
