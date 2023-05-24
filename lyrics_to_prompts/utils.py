@@ -2,12 +2,19 @@ import pandas as pd
 from torch.utils.data import Dataset, DataLoader
 
 
+class dotdict(dict):
+    """dot.notation access to dictionary attributes"""
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+
+
 class Dataset(Dataset):
 
     def __init__(self, data_dir, context_size, training=True):
 
-        file = '{}lyrics_to_prompts.csv'.format(data_dir)
-        data=pd.read_csv(file)
+        data=pd.read_csv(data_dir)
         data = data.sample(frac=1,random_state=0).reset_index(drop=True)
 
         self.context_size = context_size
@@ -35,7 +42,7 @@ class Dataset(Dataset):
             key_id -= c
             potential_key='{}:{}'.format(key_id,key_gpt_id)
             if potential_key in self.ids_2_sample:
-                context = self.ids_2_sample[potential_key][0] + '\n' + context
+                context = str(self.ids_2_sample[potential_key][0]) + ' ; ' + context
 
         return context, prompt
 
@@ -49,8 +56,8 @@ class ContextAwareDataCollator:
         prompts = []
         contexts = []
         for context, prompt in batch:
-            prompts.append( prompt + self.eos_token )
-            contexts.append(self.eos_token+ context +self.eos_token  )
+            prompts.append( self.eos_token + prompt + self.eos_token )
+            contexts.append(self.eos_token + context  )
 
         tokens=self.tokenizer(contexts,prompts , padding=True, return_token_type_ids=True, return_tensors="pt")
 
