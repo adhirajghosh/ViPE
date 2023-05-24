@@ -11,13 +11,24 @@ pattern = r'^([1-9]|[1-4][0-9]|50)\.\s'  # Regular expression pattern
 def check_prompt_format(current_line):
     return bool(re.match(pattern, current_line))
 
+#simplify gpt_ids
+def gpt_id_simple(gpt_ids):
+
+    unique_ids=list(set(gpt_ids))
+    unique_ids={v:k+1 for k,v in enumerate(unique_ids)}
+    new_ids=[unique_ids[id] for id in gpt_ids ]
+
+    return new_ids
+
+
 # def starts_with_1_to_50(string):
 #     regex = r"^(?:[1-9]|[1-4]\d|50)"
 #     return bool(re.match(regex, string))
 
 lyric_path='/graphics/scratch2/staff/Hassan/genius_crawl/'
 prompt_path = '/graphics/scratch2/staff/Hassan/chatgpt_data_v2.0/'
-ds_path = "../SongAnimator.csv"
+ds_path = "/graphics/scratch2/staff/Hassan/genius_crawl/lyrics_to_prompts.csv"
+
 data={}
 file = lyric_path+"dataset_50.pickle"
 with open(file, 'rb') as handle:
@@ -33,8 +44,11 @@ my_prompt = []
 idx = 1
 size_threshold=1000 # bytes
 
+# c_bug=0
 for artist,songs  in tqdm(file.items()):
 
+    # if c_bug >100:
+    #     break
     #check if the artist exist
     if os.path.exists(os.path.join(prompt_path, artist)):
 
@@ -42,7 +56,7 @@ for artist,songs  in tqdm(file.items()):
 
             full_title = song['title']
             lyric = song['lyrics']
-
+            #c_bug += 1
             # check if prompts exist
             if os.path.exists(os.path.join(prompt_path, artist, full_title)) == False or os.stat(
                     os.path.join(prompt_path, artist, full_title)).st_size < size_threshold:
@@ -76,7 +90,7 @@ for artist,songs  in tqdm(file.items()):
                 idx = idx + 1
 
 lyric_prompt['ids'] = my_id
-lyric_prompt['gpt_ids'] = my_gpt_id
+lyric_prompt['gpt_ids'] = gpt_id_simple(my_gpt_id)
 lyric_prompt['artists'] = my_artist
 lyric_prompt['titles'] = my_song
 lyric_prompt['lyrics'] = my_lyric
