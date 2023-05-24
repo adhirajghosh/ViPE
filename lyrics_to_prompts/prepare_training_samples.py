@@ -63,7 +63,7 @@ for artist,songs  in tqdm(file.items()):
                 continue
             else:
                 with open(os.path.join(prompt_path, artist, full_title), 'r') as f:
-                    gpt = yaml.load(f.readlines()[0],Loader=yaml.Loader)
+                    gpt = json.load(f) # json is faster than YAML
 
             gpt_id = gpt['id'].split('chatcmpl-')[1]
             prompts = gpt['choices'][0]['message']['content'].split('\n')
@@ -76,18 +76,33 @@ for artist,songs  in tqdm(file.items()):
 
             prompts = [x for x in prompts if check_prompt_format(x)]
 
+            #prompts should contain something
             if not prompts:
                 continue
 
-            for i in range(min(len(prompts), len(lyric))):
-                line = lyric[i]
+            # should also start with 1.
+            if '1. ' not in prompts[0]:
+                continue
+
+            #take the intersection of lyrics and prompts
+            for prom, line in zip(prompts, lyric):
                 my_id.append(idx)
                 my_gpt_id.append(gpt_id)
                 my_artist.append(artist)
                 my_song.append(full_title.split('by\xa0')[0])
                 my_lyric.append(line)
-                my_prompt.append(prompts[i].split('.')[1])
+                my_prompt.append(prom.split('.')[1])
                 idx = idx + 1
+
+            # for i in range(min(len(prompts), len(lyric))):
+            #     line = lyric[i]
+            #     my_id.append(idx)
+            #     my_gpt_id.append(gpt_id)
+            #     my_artist.append(artist)
+            #     my_song.append(full_title.split('by\xa0')[0])
+            #     my_lyric.append(line)
+            #     my_prompt.append(prompts[i].split('.')[1])
+            #     idx = idx + 1
 
 lyric_prompt['ids'] = my_id
 lyric_prompt['gpt_ids'] = gpt_id_simple(my_gpt_id)
