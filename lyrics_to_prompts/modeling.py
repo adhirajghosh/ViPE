@@ -5,14 +5,15 @@ from transformers import GPT2LMHeadModel, AdamW, GPT2Tokenizer,get_linear_schedu
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
 
-
 class GPT2Convertor(pl.LightningModule):
     def __init__(self, hparams):
         super(GPT2Convertor, self).__init__()
 
         self.params=hparams
         self.data_dir=hparams.data_dir
-        model_path='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/gpt2_v1.0/pretrained_gpt2/'
+        #model path if we wanna use heracleum since it does not have internet connection
+        #model_path='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/gpt2_v1.0/pretrained_gpt2/'
+        model_path='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/gpt2_medium_v1.0/pretrained_gpt2/'
         # self.model = GPT2LMHeadModel.from_pretrained(hparams.model_name)
         # self.tokenizer = GPT2Tokenizer.from_pretrained(hparams.model_name)
         self.model = GPT2LMHeadModel.from_pretrained(model_path)
@@ -23,7 +24,7 @@ class GPT2Convertor(pl.LightningModule):
         self.batch_size=hparams.batch_size
         self.learning_rate=hparams.learning_rate
         self.adam_epsilon = 1e-8
-        self.warmup_steps= 1e100
+        self.warmup_steps= hparams.warmup_steps
         self.weight_decay=0
 
     def forward(self, batch):
@@ -31,16 +32,19 @@ class GPT2Convertor(pl.LightningModule):
         attention_mask = batch["attention_mask"]
         token_type_ids = batch['token_type_ids']
 
-        labels = torch.tensor(
-            [[-100 if token_type_ids[j][i] == 0.0 else token for i, token in enumerate(label)] for j, label in
-             enumerate(input_ids)]).to(self.params.device)
+        labels = input_ids.clone()
+        labels[token_type_ids == 0] = -100
+
+        # labels = torch.tensor(
+        #     [[-100 if token_type_ids[j][i] == 0.0 else token for i, token in enumerate(label)] for j, label in
+        #      enumerate(input_ids)]).to(self.params.device)
 
         return self.model(input_ids, attention_mask=attention_mask, labels=labels,token_type_ids=token_type_ids)
 
     def training_step(self, batch, batch_idx):
         outputs = self(batch)
         loss = outputs.loss
-        self.log("loss", loss.item(), on_epoch=True, prog_bar=True, logger=True)
+        self.log("loss", loss, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -71,19 +75,6 @@ class GPT2Convertor(pl.LightningModule):
         )
         scheduler = {"scheduler": scheduler, "interval": "step", "frequency": 1}
         return [optimizer], [scheduler]
-
-    # def configure_optimizers(self):
-    #     # Total number of training steps is [number of batches] x [number of epochs].
-    #     # (Note that this is not the same as the number of training samples).
-    #     total_steps = len(self.train_dataloader) * epochs
-    #
-    #     # Create the learning rate scheduler.
-    #     # This changes the learning rate as the training loop progresses
-    #     scheduler = get_linear_schedule_with_warmup(optimizer,
-    #                                                 num_warmup_steps=warmup_steps,
-    #                                                 num_training_steps=total_steps)
-    #     optimizer = AdamW(self.model.parameters(), lr=self.learning_rate)
-    #     return optimizer
 
         ####################
         # DATA RELATED HOOKS

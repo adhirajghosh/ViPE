@@ -13,17 +13,17 @@ import json
 import argparse
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="train hehe")
+    parser = argparse.ArgumentParser(description="train hehe?")
 
     parser.add_argument(
-        "--model_name", type=str, default='gpt2', help="which gpt2 version to use?"
+        "--model_name", type=str, default='gpt2-medium', help="which gpt2 version to use?"
     )
 
     parser.add_argument(
         "--data_set_dir", type=str, default='/graphics/scratch2/staff/Hassan/genius_crawl/lyrics_to_prompts.csv', help='path to the trainign data'
     )
     parser.add_argument(
-        "--check_path", type=str, default='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/gpt2_v1.0/', help="path to save the model"
+        "--check_path", type=str, default='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/gpt2_medium_v1.0/', help="path to save the model"
     )
     parser.add_argument(
         "--batch_size", type=int, default=32
@@ -34,7 +34,10 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--learning_rate", type=float, default=5e-4
+        "--learning_rate", type=float, default=5e-5
+    )
+    parser.add_argument(
+        "--warmup_steps", type=int, default=1e3
     )
     parser.add_argument(
         "--context_length", type=int, default=5, help='number of previous lines from lyrics as the context'
@@ -53,11 +56,12 @@ def main():
 
     hparams = dotdict({})
     hparams.data_dir = args.data_set_dir
-    hparams.model_name = 'gpt2'
+    hparams.model_name = args.model_name
     hparams.context_length = args.context_length
     hparams.batch_size = args.batch_size
     hparams.learning_rate =args.learning_rate
     hparams.device=args.device
+    hparams.warmup_steps=args.warmup_steps
     check_path=args.check_path
     max_epochs=args.epochs
 
@@ -71,23 +75,14 @@ def main():
     #model.to(args.device)
 
     # checkpoint = torch.load(check_path+"correct_bert_first_layer_frozen_vit.ckpt", map_location=lambda storage, loc: storage)
-    #
     # model.load_state_dict(checkpoint['state_dict'])
     # print('checkpoint loaded')
 
-    #trainer=Trainer(accelerator='gpu', devices='0,1,2', callbacks=[checkpoint_callback, early_stop], logger=tb_logger,max_epochs=max_epochs,strategy='ddp')
-    trainer = Trainer(accelerator='gpu', devices=1, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,    max_epochs=max_epochs)
+    trainer=Trainer(accelerator='gpu', devices='0,1,2', callbacks=[checkpoint_callback, early_stop], logger=tb_logger,max_epochs=max_epochs,strategy='ddp')
+    #trainer = Trainer(accelerator='gpu', devices=1, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,    max_epochs=max_epochs)
 
     trainer.fit(model)
 
-
-    # synthetic 1 lr:  0.0007585775750291836
-    # syns 2  0.0005248074602497723
-    #syns 3 Learning rate set to 0.0005248074602497723
-    #real lr : earning rate set to 0.0005248074602497723
-
-    #for fine tuning all
-    # batch_size = 64, learning_rate = 5e-5,
 
 
 if __name__ == "__main__":

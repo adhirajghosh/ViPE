@@ -34,6 +34,7 @@ class Dataset(Dataset):
 
         key= self.keys[idx]
         context,prompt = self.ids_2_sample[key]
+        context = str(context) # a couple of nan cases exist but that should not matter give the size of the dataset
 
         #extend the context by context size
         for c in range(self.context_size,0,-1):
@@ -41,6 +42,7 @@ class Dataset(Dataset):
             key_id=int(key_id)
             key_id -= c
             potential_key='{}:{}'.format(key_id,key_gpt_id)
+
             if potential_key in self.ids_2_sample:
                 context = str(self.ids_2_sample[potential_key][0]) + ' ; ' + context
 
@@ -52,12 +54,13 @@ class ContextAwareDataCollator:
     def __init__(self, tokenizer):
         self.tokenizer = tokenizer
         self.eos_token=self.tokenizer.eos_token
+
     def collator(self, batch):
         prompts = []
         contexts = []
         for context, prompt in batch:
             prompts.append( self.eos_token + prompt + self.eos_token )
-            contexts.append(self.eos_token + context  )
+            contexts.append(self.eos_token + context )
 
         tokens=self.tokenizer(contexts,prompts , padding=True, return_token_type_ids=True, return_tensors="pt")
 
@@ -68,17 +71,27 @@ class ContextAwareDataCollator:
 
 
 # test
-# train_dataset =Dataset('../',context_size=3,training=True)
+from tqdm import tqdm
+# train_dataset =Dataset('/graphics/scratch2/staff/Hassan/genius_crawl/lyrics_to_prompts.csv',context_size=5,training=True)
+# for i, j in tqdm(train_dataset):
+#     pass
+    # try:
+    #    d= '' + j
+    # except:
+    #     print(i)
+    #     print(j)
+    #     print('\n\n')
+
 # from transformers import GPT2Tokenizer
 # tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 # tokenizer.pad_token = tokenizer.eos_token
 # data_collator = ContextAwareDataCollator(tokenizer)
 #
-#
-# train_dataloader = DataLoader(train_dataset, batch_size=16,
+# train_dataloader = DataLoader(train_dataset, batch_size=12,
 #                               shuffle=True, num_workers=2, collate_fn=data_collator)
 #
-# for batch in train_dataloader:
+# for batch in tqdm(train_dataloader):
+#     pass
 #     print(batch)
 # "You and I will never be the same ; I thought you have learned your lesson by now ; You can hide, and say you're not to blame ; You say you try, but you never change ; You and I will never be the same ; You say you try, but you never change"
 # ' A person tied up in chains, struggling to break free'
