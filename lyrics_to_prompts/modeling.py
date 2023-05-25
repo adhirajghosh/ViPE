@@ -1,11 +1,11 @@
 import torch
-import pytorch_lightning as pl
+from pytorch_lightning import LightningModule
 from utils import Dataset,ContextAwareDataCollator
 from transformers import GPT2LMHeadModel, AdamW, GPT2Tokenizer,get_linear_schedule_with_warmup
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
 
-class GPT2Convertor(pl.LightningModule):
+class GPT2Convertor(LightningModule):
     def __init__(self, hparams):
         super(GPT2Convertor, self).__init__()
 
@@ -13,11 +13,11 @@ class GPT2Convertor(pl.LightningModule):
         self.data_dir=hparams.data_dir
         #model path if we wanna use heracleum since it does not have internet connection
         #model_path='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/gpt2_v1.0/pretrained_gpt2/'
-        model_path='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/gpt2_medium_v1.0/pretrained_gpt2/'
-        # self.model = GPT2LMHeadModel.from_pretrained(hparams.model_name)
-        # self.tokenizer = GPT2Tokenizer.from_pretrained(hparams.model_name)
-        self.model = GPT2LMHeadModel.from_pretrained(model_path)
-        self.tokenizer = GPT2Tokenizer.from_pretrained(model_path)
+        #model_path='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/gpt2-medium_v1.0/pretrained_gpt2/'
+        self.model = GPT2LMHeadModel.from_pretrained(hparams.model_name)
+        self.tokenizer = GPT2Tokenizer.from_pretrained(hparams.model_name)
+        # self.model = GPT2LMHeadModel.from_pretrained(model_path)
+        # self.tokenizer = GPT2Tokenizer.from_pretrained(model_path)
         self.tokenizer.pad_token = self.tokenizer.eos_token
 
         self.context_length=hparams.context_length
@@ -44,13 +44,14 @@ class GPT2Convertor(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         outputs = self(batch)
         loss = outputs.loss
-        self.log("loss", loss, on_epoch=True, prog_bar=True, logger=True)
+        self.log("loss", loss, on_epoch=True, prog_bar=True, logger=True, sync_dist=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
+        #print("Validation step is being executed")
         loss = self(batch).loss
         # Calling self.log will surface up scalars for you in TensorBoard
-        self.log("val_loss", loss, on_epoch=True, prog_bar=True, logger=True)
+        self.log("val_loss", loss, on_epoch=True, prog_bar=True, logger=True, sync_dist=True)
 
     def configure_optimizers(self):
         """Prepare optimizer and schedule (linear warmup and decay)"""

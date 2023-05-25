@@ -1,6 +1,6 @@
 import pandas as pd
 from torch.utils.data import Dataset, DataLoader
-
+import torch
 
 class dotdict(dict):
     """dot.notation access to dictionary attributes"""
@@ -8,6 +8,46 @@ class dotdict(dict):
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
 
+
+
+def generate_from_loader(valid_gen, model, tokenizer,device):
+    name2cap={}
+    for cb, (batch, (contexts, prompts)) in enumerate(valid_gen):
+        if cb % 2 == 0:
+            print(cb, ' out of ', len(valid_gen))
+
+        input_ids = batch["input_ids"].to(device)
+        attention_mask = batch["attention_mask"].to(device)
+        token_type_ids = batch['token_type_ids'].to(device)
+        # labels = input_ids.clone()
+        #pred_caps_1=gen(model, batch,tokenizer)
+        max_length=input_ids.shape[1] + 50
+        generated_ids = model.generate(input_ids=input_ids,attention_mask=attention_mask,token_type_ids=token_type_ids, max_length=max_length,num_beams=5)
+        #generated_ids = model.generate(input_ids=input_ids, attention_mask=attention_mask,
+                                      # token_type_ids=token_type_ids, max_length=max_length)
+        pred_caps = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
+
+        for c, (context, pred_cap) in enumerate(zip(contexts,pred_caps)):
+
+            #name2cap[name] = cap
+            print('context: ', context)
+            if ';' in context:
+                print('pred: ', pred_cap.split(context.split(';')[-1])[1])
+            else:
+                print('pred: ', pred_cap.split(context.split('<|endoftext|>')[-1])[1])
+            print('true:',prompts[c] )
+            print('\n\n')
+
+            #print('GT : ', tokenizer.sequences_to_texts(batch['caption'])[c])
+            # img = io.imread(os.path.join(BASE_DATASET_DIR, 'valid_images', name[0:-3]+'png'))
+            #     # img = io.imread(os.path.join(BASE_DATASET_DIR, 'val_images', name))
+            #     #
+            #     # #img = image.load_img(os.path.join(BASE_DATASET_DIR, 'valid_images', name[0:-3]+'png'))
+            #     # # img.show()
+            # plt.imshow(img)
+            #     #
+            # plt.show()
+    return name2cap
 
 
 class Dataset(Dataset):
@@ -69,6 +109,29 @@ class ContextAwareDataCollator:
     def __call__(self, batch):
        return self.collator(batch)
 
+
+class ContextAwareDataCollatorForGeneration:
+
+    def __init__(self, tokenizer):
+        self.tokenizer = tokenizer
+        self.eos_token=self.tokenizer.eos_token
+
+    def collator(self, batch):
+        prompts = []
+        start_tokens=[]
+        contexts = []
+
+        for context, prompt in batch:
+            start_tokens.append( self.eos_token )
+            contexts.append(self.eos_token + context )
+            prompts.append(prompt)
+
+        tokens=self.tokenizer(contexts,start_tokens,padding=True, return_token_type_ids=True, return_tensors="pt")
+
+        return tokens,(contexts,prompts)
+
+    def __call__(self, batch):
+       return self.collator(batch)
 
 # test
 from tqdm import tqdm
