@@ -9,7 +9,16 @@ from tqdm import  tqdm
 
 pattern = r'^([1-9]|[1-4][0-9]|50)\.\s'  # Regular expression pattern
 def check_prompt_format(current_line):
+
     return bool(re.match(pattern, current_line))
+
+#some prompts are reallt long like 60 or so, but only a few
+def truncate(line, max_len):
+    words=line.split(' ')
+    if len(words) > max_len:
+        words = words[0:max_len]
+        return ' '.join(words)
+    return  line
 
 #simplify gpt_ids
 def gpt_id_simple(gpt_ids):
@@ -43,6 +52,7 @@ my_lyric = []
 my_prompt = []
 idx = 1
 size_threshold=1000 # bytes
+max_prompt_len=30 # less than 1k of the prompts are longer than 30
 
 # c_bug=0
 for artist,songs  in tqdm(file.items()):
@@ -74,7 +84,7 @@ for artist,songs  in tqdm(file.items()):
             # 3. Exclude songs that were not processed
             # 4. If there exist lines that aren't part of the song at the end
 
-            prompts = [x for x in prompts if check_prompt_format(x)]
+            prompts = [truncate(x,max_prompt_len) for x in prompts if check_prompt_format(x)]
 
             #prompts should contain something
             if not prompts:
