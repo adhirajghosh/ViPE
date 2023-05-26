@@ -1,15 +1,23 @@
- #!/bin/bash
-#SBATCH --job-name=first_job_hsh                  # Job name
-#SBATCH --partition=gpu-2080ti                # partition
-#SBATCH --gres=gpu:1                   # type and number of gpus
+#!/bin/bash
+#SBATCH --job-name=gpt2                  # Job name
+#SBATCH --partition=a100                # partition
+#SBATCH --gres=gpu:4                   # type and number of gpus
 #SBATCH --mem=50G                           # Memory pool for all cores (see also --mem-per-cpu)
-#SBATCH --nodes 1                           # number of nodes
+#SBATCH --nodes 1# number of nodes
+#SBATCH --ntasks-per-node=4
+#SBATCH --cpus-per-task=2
 #SBATCH --time=72:00:00                     # job will be cancelled after 6h 30min, max is 72h
-#SBATCH --output=/mnt/qb/work2/lensch0/hshahmohammadi86/slurm/out/run-%j.out
-#SBATCH --error=/mnt/qb/work2/lensch0/hshahmohammadi86/slurm/error/run-%j.err
+#SBATCH output=/mnt/lustre/lensch/hshahmohammadi86/checkpoints/logs/ml_cloud/run-%j.out
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=hasan.karezan@gmail.com
 # insert your commands here
+source "$HOME/.bashrc"  # Load your shell's configuration
+
+conda activate /mnt/lustre/lensch/hshahmohammadi86/.conda/envs/env
+
+cd /mnt/lustre/lensch/hshahmohammadi86/projects/SongAnimator/lyrics_to_prompts/
+python training.py --ml 1 --batch_size 64
+
 echo '---------------- Status of this machine: ----------------'
 nvidia-smi
 echo ""
