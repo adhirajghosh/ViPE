@@ -16,7 +16,7 @@ source "$HOME/.bashrc"  # Load your shell's configuration
 conda activate /mnt/lustre/lensch/hshahmohammadi86/.conda/envs/env
 
 cd /mnt/lustre/lensch/hshahmohammadi86/projects/SongAnimator/lyrics_to_prompts/
-python training.py --ml 1 --batch_size 64
+srun python training.py --ml 1 --batch_size 64
 
 echo '---------------- Status of this machine: ----------------'
 nvidia-smi
