@@ -33,7 +33,7 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--check_path_ml", type=str, default=' /mnt/lustre/lensch/hshahmohammadi86/checkpoints/songanimator/',
+        "--check_path_ml", type=str, default='/mnt/lustre/lensch/hshahmohammadi86/checkpoints/songanimator/',
         help="path to save the model"
     )
     parser.add_argument(
