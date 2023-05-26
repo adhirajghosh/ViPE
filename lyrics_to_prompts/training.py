@@ -67,7 +67,7 @@ def parse_args():
 
 def main():
 
-    print('job is running')
+    #print('job is running')
     args = parse_args()
 
     hparams = dotdict({})
@@ -108,11 +108,10 @@ def main():
     # model.load_state_dict(checkpoint['state_dict'])
     # print('checkpoint loaded')
 
-    trainer=Trainer(accelerator='gpu', devices=4, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,max_epochs=max_epochs,strategy='ddp')
+    trainer=Trainer(accelerator='gpu', devices='0,1,2,3', callbacks=[checkpoint_callback, early_stop], logger=tb_logger,max_epochs=max_epochs,strategy='ddp')
     #trainer = Trainer(accelerator='gpu', devices=1, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,    max_epochs=max_epochs)
 
     trainer.fit(model)
-
 
 
 if __name__ == "__main__":
