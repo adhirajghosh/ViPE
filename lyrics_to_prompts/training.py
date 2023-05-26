@@ -91,6 +91,8 @@ def main():
     # Specify the directory path and file name
     file_path = check_path + 'hparams_cxt_{}.txt'.format(args.context_length)
 
+    if os.path.isfile(file_path):
+        print('file exist')
     # Create the directory if it doesn't exist
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
@@ -108,7 +110,7 @@ def main():
     # model.load_state_dict(checkpoint['state_dict'])
     # print('checkpoint loaded')
 
-    trainer=Trainer(accelerator='gpu', devices=4, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,max_epochs=max_epochs,strategy='ddp')
+    trainer=Trainer(limit_train_batches=100,limit_val_batches=100, accelerator='gpu', devices=4, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,max_epochs=max_epochs,strategy='ddp')
     #trainer = Trainer(accelerator='gpu', devices=1, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,    max_epochs=max_epochs)
 
     trainer.fit(model)
