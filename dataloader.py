@@ -7,7 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 
-raw_dataset = pd.read_csv('./SongAnimator.csv',encoding='latin-1')
+raw_dataset = pd.read_csv('lyrics_to_prompts.csv', encoding='latin-1')
 
 class MyDataset(Dataset):
     def __init__(self, csv_file):
@@ -29,7 +29,7 @@ class MyDataset(Dataset):
         return sample
 
 # Load the dataset
-dataset = MyDataset('./SongAnimator.csv')
+dataset = MyDataset('lyrics_to_prompts.csv')
 
 # Split the dataset into train and test sets
 train_data, test_data = train_test_split(dataset, test_size=0.2, random_state=42)

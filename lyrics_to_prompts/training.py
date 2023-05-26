@@ -22,8 +22,19 @@ def parse_args():
     parser.add_argument(
         "--data_set_dir", type=str, default='/graphics/scratch2/staff/Hassan/genius_crawl/lyrics_to_prompts.csv', help='path to the trainign data'
     )
+
+    parser.add_argument(
+        "--data_set_dir_ml", type=str, default='/mnt/lustre/lensch/hshahmohammadi86/datasets/genuis_chatgpt/lyrics_to_prompts.csv',
+        help='path to the training data'
+    )
+
     parser.add_argument(
         "--check_path", type=str, default='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/', help="path to save the model"
+    )
+
+    parser.add_argument(
+        "--check_path_ml", type=str, default=' /mnt/lustre/lensch/hshahmohammadi86/checkpoints/songanimator/',
+        help="path to save the model"
     )
     parser.add_argument(
         "--batch_size", type=int, default=32
@@ -47,6 +58,10 @@ def parse_args():
         "--device", type=str, default='cuda', help='cuda or cpu?'
     )
 
+    parser.add_argument(
+        "--ml", type=int, default=1, help='set to 1 to use ml paths'
+    )
+
     args = parser.parse_args()
     return args
 
@@ -55,22 +70,28 @@ def main():
     args = parse_args()
 
     hparams = dotdict({})
-    hparams.data_dir = args.data_set_dir
+
     hparams.model_name = args.model_name
     hparams.context_length = args.context_length
     hparams.batch_size = args.batch_size
     hparams.learning_rate =args.learning_rate
     hparams.device=args.device
     hparams.warmup_steps=args.warmup_steps
-    check_path=args.check_path
     max_epochs=args.epochs
-    check_path = check_path +'{}_v1.0/'.format(args.model_name)
+    if args.ml ==0:
+        check_path = args.check_path
+        check_path = check_path +'{}_v2.0/'.format(args.model_name)
+        hparams.data_dir = args.data_set_dir
+    else:
+        check_path = args.check_path_ml
+        check_path = check_path + '{}/'.format(args.model_name)
+        hparams.data_dir = args.data_set_dir_ml
 
     with open(check_path +'hparams.txt', 'w') as file:
         file.write(json.dumps(hparams))
 
     tb_logger = pl_loggers.TensorBoardLogger(save_dir=check_path+"logs/", name="lightning_logs")
-    checkpoint_callback = ModelCheckpoint(dirpath=check_path, save_top_k=5, monitor="val_loss",save_weights_only=True,filename=args.model_name)
+    checkpoint_callback = ModelCheckpoint(dirpath=check_path, save_top_k=5, monitor="val_loss",save_weights_only=True,filename='{}_context_{}'.format(args.model_name,args.context_length))
     early_stop = EarlyStopping(monitor="val_loss", mode="min",patience=3)
     model = GPT2Convertor(hparams)
     #model.to(args.device)
@@ -79,7 +100,7 @@ def main():
     # model.load_state_dict(checkpoint['state_dict'])
     # print('checkpoint loaded')
 
-    trainer=Trainer(accelerator='gpu', devices='0,1,2', callbacks=[checkpoint_callback, early_stop], logger=tb_logger,max_epochs=max_epochs,strategy='ddp')
+    trainer=Trainer(accelerator='gpu', devices='0,1,2,3', callbacks=[checkpoint_callback, early_stop], logger=tb_logger,max_epochs=max_epochs,strategy='ddp')
     #trainer = Trainer(accelerator='gpu', devices=1, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,    max_epochs=max_epochs)
 
     trainer.fit(model)

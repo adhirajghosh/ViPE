@@ -1,7 +1,7 @@
 from modeling import GPT2Convertor
 
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '5'
+os.environ['CUDA_VISIBLE_DEVICES'] = '4'
 from torch.utils.data import Dataset, DataLoader
 import torch
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -10,7 +10,7 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from utils import Dataset, ContextAwareDataCollator,ContextAwareDataCollatorForGeneration
 from pytorch_lightning import  Trainer
 from modeling import GPT2Convertor
-from utils import dotdict, generate_from_loader
+from utils import dotdict, generate_from_loader,generate_from_sentences
 import json
 import argparse
 
@@ -22,13 +22,13 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--data_set_dir", type=str, default='/graphics/scratch2/staff/Hassan/genius_crawl/lyrics_to_prompts.csv', help='path to the trainign data'
+        "--data_set_dir", type=str, default='/graphics/scratch2/staff/Hassan/genius_crawl/lyrics_to_prompts_v2.0.csv', help='path to the trainign data'
     )
     parser.add_argument(
         "--check_path", type=str, default='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/', help="path to save the model"
     )
     parser.add_argument(
-        "--batch_size", type=int, default=32
+        "--batch_size", type=int, default=30
     )
 
     parser.add_argument(
@@ -69,22 +69,25 @@ def main():
 
     model = GPT2Convertor(hparams)
 
-    checkpoint = torch.load(check_path+hparams.model_name +".ckpt", map_location=lambda storage, loc: storage)
+    checkpoint = torch.load(check_path+hparams.model_name +"-v1.ckpt", map_location=lambda storage, loc: storage)
     model.load_state_dict(checkpoint['state_dict'])
     model.to(args.device)
     print('checkpoint loaded')
 
 
     tokenizer = model.tokenizer
+    tokenizer.padding_side='left'
     model = model.model
 
     train_dataset =Dataset(args.data_set_dir,context_size=5,training=False)
     data_collator = ContextAwareDataCollatorForGeneration(tokenizer)
 
-    dataloader = DataLoader(train_dataset, batch_size=16,
+    dataloader = DataLoader(train_dataset, batch_size=8,
                                   shuffle=False, num_workers=2, collate_fn=data_collator)
 
-    name2cap = generate_from_loader(dataloader, model, tokenizer,hparams.device)
+    text=[' feels like the weight of the world; like god in heaven gave me a turn ;', 'dont cling to me i swear i cant fix you ;']
+    generate_from_sentences(text,model, tokenizer,hparams.device)
+    #name2cap = generate_from_loader(dataloader, model, tokenizer,hparams.device)
 
 
 if __name__ == "__main__":
