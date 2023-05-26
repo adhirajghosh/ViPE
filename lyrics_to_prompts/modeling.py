@@ -90,10 +90,10 @@ class GPT2Convertor(LightningModule):
     def train_dataloader(self):
 
         train_dataloader = DataLoader(self.train_dataset, batch_size=self.batch_size,
-                                      shuffle=True, num_workers=8, collate_fn=self.data_collator, prefetch_factor=3)
+                                      shuffle=True, num_workers=4, collate_fn=self.data_collator, prefetch_factor=3)
         return train_dataloader
 
     def val_dataloader(self):
         valid_dataloader = DataLoader(self.valid_dataset, batch_size=self.batch_size,
-                                      shuffle=False, num_workers=8, collate_fn=self.data_collator, prefetch_factor=3)
+                                      shuffle=False, num_workers=4, collate_fn=self.data_collator, prefetch_factor=3)
         return valid_dataloader
