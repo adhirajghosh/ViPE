@@ -91,8 +91,8 @@ def main():
     # Specify the directory path and file name
     file_path = check_path + 'hparams_cxt_{}.txt'.format(args.context_length)
 
-    if os.path.isfile(file_path):
-        print('file exist')
+    # if os.path.isfile(file_path):
+    #     print('file exist')
     # Create the directory if it doesn't exist
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
@@ -100,10 +100,10 @@ def main():
     with open(file_path, 'w') as file:
         file.write(json.dumps(hparams))
 
-    print('openning the file')
-    with open(file_path, 'r') as file:
-        file=file.readline()
-    print(file)
+    # print('openning the file')
+    # with open(file_path, 'r') as file:
+    #     file=file.readline()
+    # print(file)
 
 
     tb_logger = pl_loggers.TensorBoardLogger(save_dir=check_path+"logs/", name="lightning_logs")
