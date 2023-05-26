@@ -1,11 +1,11 @@
 #!/bin/bash
 #SBATCH --job-name=gpt2                  # Job name
 #SBATCH --partition=a100                # partition
-#SBATCH --gres=gpu:4                   # type and number of gpus
-#SBATCH --mem=50G                           # Memory pool for all cores (see also --mem-per-cpu)
+#SBATCH --gres=gpu:8                   # type and number of gpus
+#SBATCH --mem=100G                           # Memory pool for all cores (see also --mem-per-cpu)
 #SBATCH --nodes 1# number of nodes
-#SBATCH --ntasks-per-node=4
-#SBATCH --cpus-per-task=2
+#SBATCH --ntasks-per-node=8
+#SBATCH --cpus-per-task=8
 #SBATCH --time=72:00:00                     # job will be cancelled after 6h 30min, max is 72h
 #SBATCH --output=/mnt/lustre/lensch/hshahmohammadi86/checkpoints/logs/ml_cloud/run-%j.out
 #SBATCH --mail-type=FAIL
@@ -16,7 +16,7 @@ source "$HOME/.bashrc"  # Load your shell's configuration
 conda activate /mnt/lustre/lensch/hshahmohammadi86/.conda/envs/env
 
 cd /mnt/lustre/lensch/hshahmohammadi86/projects/SongAnimator/lyrics_to_prompts/
-srun python training.py --ml 1 --batch_size 64
+srun python training.py --ml 1 --batch_size 60
 
 echo '---------------- Status of this machine: ----------------'
 nvidia-smi
