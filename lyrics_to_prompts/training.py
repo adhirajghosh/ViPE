@@ -100,6 +100,12 @@ def main():
     with open(file_path, 'w') as file:
         file.write(json.dumps(hparams))
 
+    print('openning the file')
+    with open(file_path, 'r') as file:
+        file=file.readline()
+    print(file)
+
+
     tb_logger = pl_loggers.TensorBoardLogger(save_dir=check_path+"logs/", name="lightning_logs")
     checkpoint_callback = ModelCheckpoint(dirpath=check_path, save_top_k=5, monitor="val_loss",save_weights_only=True,filename='{}_context_{}'.format(args.model_name,args.context_length))
     early_stop = EarlyStopping(monitor="val_loss", mode="min",patience=3)
