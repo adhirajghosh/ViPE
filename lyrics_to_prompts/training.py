@@ -67,6 +67,7 @@ def parse_args():
 
 def main():
 
+    print('job is running')
     args = parse_args()
 
     hparams = dotdict({})
