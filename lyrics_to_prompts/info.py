@@ -7,7 +7,7 @@ pl=[]
 for l, p in tqdm(zip(data['lyrics'],data['prompts'])):
     ll.append(len(str(l).split(' ')))
     pl.append(len(str(p).split(' ')))
-    if pl[-1] > 40:
+    if pl[-1] > 25:
         print(p)
 print('total samples :', len(data))
 print('wrong file in lyrics ', sum([1 for i in ll if i ==1]))

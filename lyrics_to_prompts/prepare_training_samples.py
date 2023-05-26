@@ -52,7 +52,7 @@ my_lyric = []
 my_prompt = []
 idx = 1
 size_threshold=1000 # bytes
-max_prompt_len=30 # less than 1k of the prompts are longer than 30
+max_prompt_len=25 # more than 99% of the data have less than 25
 
 # c_bug=0
 for artist,songs  in tqdm(file.items()):

@@ -44,14 +44,14 @@ class GPT2Convertor(LightningModule):
     def training_step(self, batch, batch_idx):
         outputs = self(batch)
         loss = outputs.loss
-        self.log("loss", loss, on_epoch=True, prog_bar=True, logger=True, sync_dist=True)
+        self.log("loss", loss.item(), on_epoch=True, prog_bar=True, logger=True, sync_dist=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
         #print("Validation step is being executed")
         loss = self(batch).loss
         # Calling self.log will surface up scalars for you in TensorBoard
-        self.log("val_loss", loss, on_epoch=True, prog_bar=True, logger=True, sync_dist=True)
+        self.log("val_loss", loss.item(), on_epoch=True, prog_bar=True, logger=True, sync_dist=True)
 
     def configure_optimizers(self):
         """Prepare optimizer and schedule (linear warmup and decay)"""
