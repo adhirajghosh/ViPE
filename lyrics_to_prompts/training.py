@@ -88,7 +88,7 @@ def main():
         check_path = check_path + '{}/'.format(args.model_name)
         hparams.data_dir = args.data_set_dir_ml
 
-    with open(check_path +'hparams.txt', 'w') as file:
+    with open(check_path +'hparams_cxt{}.txt'.format(args.context_length), 'w') as file:
         file.write(json.dumps(hparams))
 
     tb_logger = pl_loggers.TensorBoardLogger(save_dir=check_path+"logs/", name="lightning_logs")
