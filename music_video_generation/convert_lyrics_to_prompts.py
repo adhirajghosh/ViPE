@@ -60,13 +60,26 @@ def main():
     tokenizer.padding_side='left'
     model = model.model
 
-    lyrics=open(args.lyrics, 'r').readlines()
-    lyrics=[line for line in lyrics if '\n' not in line]
+    with open(args.lyrics, 'r') as file:
+        lyrics = file.read()
+    lyrics=[line for line in lyrics.split('\n') if len(line.split(' ')) > 1]
 
-    text=[' feels like the weight of the world; like god in heaven gave me a turn ;', 'dont cling to me i swear i cant fix you ;']
-    generate_from_sentences(text,model, tokenizer,hparams.device)
+    for _ in range(hparams.context_length+1):
+        lyrics = ['null'] + lyrics
+    lyrics = [lyrics[i:i + hparams.context_length+1] for i in range(len(lyrics) - hparams.context_length )]
+    for c, text in enumerate(lyrics):
+        text='; '.join([t for t in text if t != 'null'])
+        lyrics[c] = text
+
+    lyrics.pop(0)
+    prompts=generate_from_sentences(lyrics,model, tokenizer,hparams.device)
+
+    with open(args.lyrics+'_prompts', 'w') as file:
+        for line, prompt in zip(lyrics, prompts):
+            print(prompt.split(line)[1])
+            file.write(prompt.split(line)[1])
+
     #name2cap = generate_from_loader(dataloader, model, tokenizer,hparams.device)
-
 
 if __name__ == "__main__":
     main()
