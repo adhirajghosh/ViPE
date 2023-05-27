@@ -7,6 +7,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --time=72:00:00                     # job will be cancelled after 6h 30min, max is 72h
 #SBATCH --output=/mnt/lustre/lensch/hshahmohammadi86/checkpoints/logs/ml_cloud/run_%A_%a.out
+#SBATCH --array=0-6%1
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=hasan.karezan@gmail.com
 # insert your commands here
