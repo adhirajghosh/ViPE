@@ -7,7 +7,7 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 
 from pytorch_lightning import  Trainer
 from modeling import GPT2Convertor
-from utils_lyric2prompt import dotdict
+from utils import dotdict
 import json
 import argparse
 
