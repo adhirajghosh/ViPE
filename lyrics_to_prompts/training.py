@@ -1,7 +1,6 @@
 import os
 #os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
-import torch
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
@@ -59,7 +58,7 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--ml", type=int, default=1, help='set to 1 to use ml paths'
+        "--ml", type=int, default=0, help='set to 1 to use ml paths'
     )
 
     args = parser.parse_args()
@@ -79,20 +78,20 @@ def main():
     hparams.device=args.device
     hparams.warmup_steps=args.warmup_steps
     max_epochs=args.epochs
+
     if args.ml ==0:
         check_path = args.check_path
-        check_path = check_path +'{}_v2.0/'.format(args.model_name)
+        check_path = check_path +'{}_v1.0/'.format(args.model_name)
         hparams.data_dir = args.data_set_dir
     else:
         check_path = args.check_path_ml
         check_path = check_path + '{}/'.format(args.model_name)
         hparams.data_dir = args.data_set_dir_ml
 
-    # Specify the directory path and file name
-    file_path = check_path + 'hparams_cxt_{}.txt'.format(args.context_length)
+    model_name='{}_context_ctx{}_lr_{}'.format(args.model_name, args.context_length,args.learning_rate)
 
-    # if os.path.isfile(file_path):
-    #     print('file exist')
+    # Specify the directory path and file name
+    file_path = check_path + 'hparams_'+model_name
     # Create the directory if it doesn't exist
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
@@ -104,10 +103,8 @@ def main():
     # with open(file_path, 'r') as file:
     #     file=file.readline()
     # print(file)
-
-
-    tb_logger = pl_loggers.TensorBoardLogger(save_dir=check_path+"logs/", name="lightning_logs")
-    checkpoint_callback = ModelCheckpoint(dirpath=check_path, save_top_k=5, monitor="val_loss",save_weights_only=True,filename='{}_context_{}'.format(args.model_name,args.context_length))
+    tb_logger = pl_loggers.TensorBoardLogger(save_dir=check_path+"logs/", name=model_name)
+    checkpoint_callback = ModelCheckpoint(dirpath=check_path, save_top_k=5, monitor="val_loss",save_weights_only=True,filename=model_name)
     early_stop = EarlyStopping(monitor="val_loss", mode="min",patience=3)
     model = GPT2Convertor(hparams)
     #model.to(args.device)
@@ -115,9 +112,8 @@ def main():
     # checkpoint = torch.load(check_path+"correct_bert_first_layer_frozen_vit.ckpt", map_location=lambda storage, loc: storage)
     # model.load_state_dict(checkpoint['state_dict'])
     # print('checkpoint loaded')
-
-    #trainer=Trainer(accelerator='gpu', devices=8, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,max_epochs=max_epochs,strategy='ddp')
-    trainer = Trainer(accelerator='gpu', devices=1, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,    max_epochs=max_epochs)
+    trainer=Trainer(accelerator='gpu', devices=8, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,max_epochs=max_epochs,strategy='ddp')
+    #trainer = Trainer(accelerator='gpu', devices=1, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,    max_epochs=max_epochs, limit_train_batches=10, limit_val_batches=10)
 
     trainer.fit(model)
 
