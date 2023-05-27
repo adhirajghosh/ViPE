@@ -77,7 +77,7 @@ def main():
     with open(args.lyrics+'_prompts', 'w') as file:
         for line, prompt in zip(lyrics, prompts):
             print(prompt.split(line)[1])
-            file.write(prompt.split(line)[1])
+            file.write(prompt.split(line)[1] +  '\n')
 
     #name2cap = generate_from_loader(dataloader, model, tokenizer,hparams.device)
 
