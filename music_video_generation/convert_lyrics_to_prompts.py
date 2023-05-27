@@ -2,7 +2,7 @@ from lyrics_to_prompts.modeling import GPT2Convertor
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 import torch
-from lyrics_to_prompts.utils import dotdict,generate_from_sentences
+from lyrics_to_prompts.utils_lyric2prompt import dotdict,generate_from_sentences
 import json
 import argparse
 
@@ -45,7 +45,6 @@ def main():
     hparams = dotdict({})
     hparams.model_name = args.model_name
     hparams.context_length = args.context_length
-    hparams.batch_size = args.batch_size
     hparams.device=args.device
     hparams.warmup_steps=args.warmup_steps
     check_path=args.check_path

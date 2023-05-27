@@ -1,6 +1,5 @@
 import pandas as pd
 from torch.utils.data import Dataset, DataLoader
-import torch
 
 class dotdict(dict):
     """dot.notation access to dictionary attributes"""

@@ -1,6 +1,6 @@
 import torch
 from pytorch_lightning import LightningModule
-from utils import Dataset,ContextAwareDataCollator
+from utils_lyric2prompt import Dataset,ContextAwareDataCollator
 from transformers import GPT2LMHeadModel, AdamW, GPT2Tokenizer,get_linear_schedule_with_warmup
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
