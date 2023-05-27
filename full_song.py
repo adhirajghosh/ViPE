@@ -4,7 +4,7 @@ import sys
 import numpy as np
 import os
 from transformers import pipeline
-from utils import *
+from main_utils import *
 from vid import create_video
 from logger import Logger
 
