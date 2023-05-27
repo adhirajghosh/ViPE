@@ -79,7 +79,7 @@ def generate_from_sentences(text, model, tokenizer,device):
     # labels = input_ids.clone()
     #pred_caps_1=gen(model, batch,tokenizer)
     max_length=input_ids.shape[1] + max_prompt_length
-    generated_ids = model.generate(input_ids=input_ids,attention_mask=attention_mask, max_length=max_length,num_beams=3, do_sample=False)
+    generated_ids = model.generate(input_ids=input_ids,attention_mask=attention_mask, max_length=max_length,num_beams=3, do_sample=True)
     #generated_ids = model.generate(input_ids=input_ids, attention_mask=attention_mask,
                                   # token_type_ids=token_type_ids, max_length=max_length)
     pred_caps = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
