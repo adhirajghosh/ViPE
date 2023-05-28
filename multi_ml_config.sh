@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=gpt2_single                  # Job name
+#SBATCH --job-name=gpt2_lr                  # Job name
 #SBATCH --partition=a100                # partition
-#SBATCH --gres=gpu:4                  # type and number of gpus
+#SBATCH --gres=gpu:8                  # type and number of gpus
 #SBATCH --mem=50G                           # Memory pool for all cores (see also --mem-per-cpu)
 #SBATCH --nodes 1# number of nodes
 #SBATCH --cpus-per-task=8
