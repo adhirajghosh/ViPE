@@ -51,7 +51,7 @@ def main():
 
     model = GPT2Convertor(hparams)
 
-    checkpoint = torch.load(check_path+hparams.model_name +"-v3.ckpt", map_location=lambda storage, loc: storage)
+    checkpoint = torch.load(check_path+hparams.model_name +"-v2.ckpt", map_location=lambda storage, loc: storage)
     model.load_state_dict(checkpoint['state_dict'])
     model.to(args.device)
     print('checkpoint loaded')
