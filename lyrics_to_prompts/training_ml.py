@@ -8,6 +8,7 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning import  Trainer
 from modeling import GPT2Convertor
 from utils import dotdict
+
 import json
 import argparse
 
@@ -58,7 +59,7 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--ml", type=int, default=0, help='set to 1 to use ml paths'
+        "--ml", type=int, default=1, help='set to 1 to use ml paths'
     )
 
     args = parser.parse_args()
@@ -88,7 +89,7 @@ def main():
         check_path = check_path + '{}/'.format(args.model_name)
         hparams.data_dir = args.data_set_dir_ml
 
-    model_name='{}_context_ctx{}_lr_{}'.format(args.model_name, args.context_length,args.learning_rate)
+    model_name='{}_context_ctx_{}_lr_{}'.format(args.model_name, args.context_length,args.learning_rate)
 
     # Specify the directory path and file name
     file_path = check_path + 'hparams_'+model_name
@@ -108,8 +109,8 @@ def main():
     # checkpoint = torch.load(check_path+"correct_bert_first_layer_frozen_vit.ckpt", map_location=lambda storage, loc: storage)
     # model.load_state_dict(checkpoint['state_dict'])
     # print('checkpoint loaded')
-    trainer=Trainer(accelerator='gpu', devices=4, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,max_epochs=max_epochs,strategy='ddp')
-    #trainer = Trainer(accelerator='gpu', devices=1, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,    max_epochs=max_epochs, limit_train_batches=10, limit_val_batches=10)
+    #trainer=Trainer(accelerator='gpu', devices=8, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,max_epochs=max_epochs,strategy='ddp')
+    trainer = Trainer(accelerator='gpu', devices=8, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,    max_epochs=max_epochs, limit_train_batches=10, limit_val_batches=10)
     trainer.fit(model)
 
 if __name__ == "__main__":

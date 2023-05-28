@@ -88,7 +88,7 @@ def main():
         check_path = check_path + '{}/'.format(args.model_name)
         hparams.data_dir = args.data_set_dir_ml
 
-    model_name='{}_context_ctx{}_lr_{}'.format(args.model_name, args.context_length,args.learning_rate)
+    model_name='{}_context_ctx_{}_lr_{}'.format(args.model_name, args.context_length,args.learning_rate)
 
     # Specify the directory path and file name
     file_path = check_path + 'hparams_'+model_name
@@ -108,7 +108,7 @@ def main():
     # checkpoint = torch.load(check_path+"correct_bert_first_layer_frozen_vit.ckpt", map_location=lambda storage, loc: storage)
     # model.load_state_dict(checkpoint['state_dict'])
     # print('checkpoint loaded')
-    trainer=Trainer(accelerator='gpu', devices='0,1,2,3', callbacks=[checkpoint_callback, early_stop], logger=tb_logger,max_epochs=max_epochs,strategy='ddp')
+    trainer=Trainer(accelerator='gpu', devices=1, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,max_epochs=max_epochs)
     #trainer = Trainer(accelerator='gpu', devices=1, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,    max_epochs=max_epochs, limit_train_batches=10, limit_val_batches=10)
     trainer.fit(model)
 
