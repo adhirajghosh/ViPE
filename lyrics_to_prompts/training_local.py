@@ -44,7 +44,7 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--learning_rate", type=float, default=5e-5
+        "--learning_rate", type=float, default=5e-4
     )
     parser.add_argument(
         "--warmup_steps", type=int, default=1e3
@@ -81,7 +81,7 @@ def main():
 
     if args.ml ==0:
         check_path = args.check_path
-        check_path = check_path +'{}_v1.0/'.format(args.model_name)
+        check_path = check_path +'{}_v2.0/'.format(args.model_name)
         hparams.data_dir = args.data_set_dir
     else:
         check_path = args.check_path_ml
@@ -108,7 +108,7 @@ def main():
     # checkpoint = torch.load(check_path+"correct_bert_first_layer_frozen_vit.ckpt", map_location=lambda storage, loc: storage)
     # model.load_state_dict(checkpoint['state_dict'])
     # print('checkpoint loaded')
-    trainer=Trainer(accelerator='gpu', devices=1, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,max_epochs=max_epochs)
+    trainer=Trainer(accelerator='gpu', devices='0,1,2', callbacks=[checkpoint_callback, early_stop], logger=tb_logger,max_epochs=max_epochs,strategy='ddp')
     #trainer = Trainer(accelerator='gpu', devices=1, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,    max_epochs=max_epochs, limit_train_batches=10, limit_val_batches=10)
     trainer.fit(model)
 
