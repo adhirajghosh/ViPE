@@ -1,9 +1,5 @@
-import torch
 from pytorch_lightning import LightningModule
-from utils import Dataset,ContextAwareDataCollator
-from transformers import GPT2LMHeadModel, AdamW, GPT2Tokenizer,get_linear_schedule_with_warmup
-from torch.utils.data import DataLoader
-from torch.optim import AdamW
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
 class GPT2Convertor(LightningModule):
     def __init__(self, hparams):
@@ -53,47 +49,3 @@ class GPT2Convertor(LightningModule):
         # Calling self.log will surface up scalars for you in TensorBoard
         self.log("val_loss", loss.item(), on_epoch=True, prog_bar=True, logger=True, sync_dist=True)
 
-    def configure_optimizers(self):
-        """Prepare optimizer and schedule (linear warmup and decay)"""
-        #model = self.model
-        no_decay = ["bias", "LayerNorm.weight"]
-        # optimizer_grouped_parameters = [
-        #     {
-        #         "params": [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
-        #         "weight_decay": self.weight_decay,
-        #     },
-        #     {
-        #         "params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)],
-        #         "weight_decay": 0.0,
-        #     },
-        # ]
-        optimizer = AdamW(self.model.parameters(), lr=self.learning_rate, eps=self.adam_epsilon)
-        #optimizer = AdamW(self.model.parameters(), lr=self.learning_rate)
-        scheduler = get_linear_schedule_with_warmup(
-            optimizer,
-            num_warmup_steps=self.warmup_steps,
-            num_training_steps=self.trainer.estimated_stepping_batches,
-        )
-        scheduler = {"scheduler": scheduler, "interval": "step", "frequency": 1}
-        return [optimizer], [scheduler]
-
-        ####################
-        # DATA RELATED HOOKS
-        ####################
-
-    def setup(self, stage=None):
-        # Assign train/val datasets for use in dataloaders
-        self.train_dataset = Dataset(self.data_dir,context_size=self.context_length, training=True)
-        self.valid_dataset = Dataset(self.data_dir,context_size=self.context_length,  training=False)
-        self.data_collator = ContextAwareDataCollator(self.tokenizer)
-
-    def train_dataloader(self):
-
-        train_dataloader = DataLoader(self.train_dataset, batch_size=self.batch_size,
-                                      shuffle=True, num_workers=4, collate_fn=self.data_collator, prefetch_factor=3)
-        return train_dataloader
-
-    def val_dataloader(self):
-        valid_dataloader = DataLoader(self.valid_dataset, batch_size=self.batch_size,
-                                      shuffle=False, num_workers=4, collate_fn=self.data_collator, prefetch_factor=3)
-        return valid_dataloader
