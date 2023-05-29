@@ -64,6 +64,8 @@ def main():
         lyrics = file.read()
     lyrics=[line for line in lyrics.split('\n') if len(line.split(' ')) > 1]
 
+    hparams.context_length=8
+
     for _ in range(hparams.context_length+1):
         lyrics = ['null'] + lyrics
     lyrics = [lyrics[i:i + hparams.context_length+1] for i in range(len(lyrics) - hparams.context_length )]
