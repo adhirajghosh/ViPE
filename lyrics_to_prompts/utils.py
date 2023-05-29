@@ -99,12 +99,16 @@ class Dataset(Dataset):
         self.context_size = context_size
         self.ids_2_sample={}
         self.keys=[str(i)+':'+str(j) for i,j in zip(data['ids'],data['gpt_ids'])]
-        values=zip(data['lyrics'], data['prompts'])
-        self.ids_2_sample={k:v for k,v in zip(self.keys,values)}
+        values = zip(data['lyrics'], data['prompts'])
 
-        if not training:
-            valid_index=int(.10 * len(self.ids_2_sample))
-            self.keys = list(self.ids_2_sample.keys())[0:valid_index]
+        valid_index = int(.10 * len(self.keys))
+
+        if training:
+            self.keys = self.keys[valid_index:]
+            self.ids_2_sample = {k: v for k, v in zip(self.keys, values)}
+        else:
+            self.keys = self.keys[0:valid_index]
+            self.ids_2_sample = {k: v for k, v in zip(self.keys, values)}
 
     def __len__(self):
         return len(self.keys)
@@ -175,7 +179,7 @@ class ContextAwareDataCollatorForGeneration:
 
 # test
 from tqdm import tqdm
-# train_dataset =Dataset('/graphics/scratch2/staff/Hassan/genius_crawl/lyrics_to_prompts.csv',context_size=5,training=True)
+train_dataset =Dataset('/graphics/scratch2/staff/Hassan/genius_crawl/lyrics_to_prompts.csv',context_size=5,training=False)
 # for i, j in tqdm(train_dataset):
 #     pass
     # try:
