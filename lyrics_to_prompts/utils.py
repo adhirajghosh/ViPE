@@ -116,14 +116,15 @@ class Dataset(Dataset):
         context = str(context) # a couple of nan cases exist but that should not matter give the size of the dataset
 
         #extend the context by context size
-        for c in range(self.context_size,0,-1):
-            key_id, key_gpt_id=key.split(':')
-            key_id=int(key_id)
-            key_id -= c
-            potential_key='{}:{}'.format(key_id,key_gpt_id)
+        if self.context_size > 0:
+            for c in range(self.context_size,0,-1):
+                key_id, key_gpt_id=key.split(':')
+                key_id=int(key_id)
+                key_id -= c
+                potential_key='{}:{}'.format(key_id,key_gpt_id)
 
-            if potential_key in self.ids_2_sample:
-                context = str(self.ids_2_sample[potential_key][0]) + ' ; ' + context
+                if potential_key in self.ids_2_sample:
+                    context = str(self.ids_2_sample[potential_key][0]) + ' ; ' + context
 
         return context, prompt
 
