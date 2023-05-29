@@ -7,7 +7,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --time=72:00:00                     # job will be cancelled after 6h 30min, max is 72h
 #SBATCH --output=/mnt/lustre/lensch/hshahmohammadi86/checkpoints/logs/ml_cloud/run_%A_%a.out
-#SBATCH --array=4-5%1
+#SBATCH --array=0-1%1
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=hasan.karezan@gmail.com
 # insert your commands here
@@ -17,11 +17,11 @@ conda activate /mnt/lustre/lensch/hshahmohammadi86/.conda/envs/env
 
 cd /mnt/lustre/lensch/hshahmohammadi86/projects/SongAnimator/lyrics_to_prompts/
 
-lrs=(1e-5 2e-5 5e-5 1e-4 2e-4 5e-4)
+lrs=(2e-5 5e-5 2e-4 5e-4)
 # Get the learning rate for the current job index
 lr=${lrs[$SLURM_ARRAY_TASK_ID]}
 
-srun  python training_ml.py --ml 1 --batch_size 50 --learning_rate "$lr"
+srun  python training_ml.py --ml 1  --batch_size 164 --learning_rate "$lr" --context_length 0
 
 #echo '---------------- Status of this machine: ----------------'
 #nvidia-smi
