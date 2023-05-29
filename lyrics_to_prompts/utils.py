@@ -179,7 +179,7 @@ class ContextAwareDataCollatorForGeneration:
 
 # test
 from tqdm import tqdm
-train_dataset =Dataset('/graphics/scratch2/staff/Hassan/genius_crawl/lyrics_to_prompts.csv',context_size=5,training=False)
+#train_dataset =Dataset('/graphics/scratch2/staff/Hassan/genius_crawl/lyrics_to_prompts.csv',context_size=5,training=False)
 # for i, j in tqdm(train_dataset):
 #     pass
     # try:
