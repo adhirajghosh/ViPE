@@ -15,7 +15,7 @@ class GPT2Convertor(LightningModule):
         #model_path='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/gpt2_v1.0/pretrained_gpt2/'
         #model_path='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/gpt2-medium_v1.0/pretrained_gpt2/'
         self.model = GPT2LMHeadModel.from_pretrained(hparams.model_name)
-        self.tokenizer = GPT2Tokenizer.from_pretrained(hparams.model_name,padding_side="left")
+        self.tokenizer = GPT2Tokenizer.from_pretrained(hparams.model_name)
         # self.model = GPT2LMHeadModel.from_pretrained(model_path)
         # self.tokenizer = GPT2Tokenizer.from_pretrained(model_path,padding_side="left")
         self.tokenizer.pad_token = self.tokenizer.eos_token
@@ -39,7 +39,7 @@ class GPT2Convertor(LightningModule):
         #     [[-100 if token_type_ids[j][i] == 0.0 else token for i, token in enumerate(label)] for j, label in
         #      enumerate(input_ids)]).to(self.params.device)
 
-        return self.model(input_ids, attention_mask=attention_mask, labels=labels, token_type_ids=token_type_ids)
+        return self.model(input_ids, attention_mask=attention_mask, labels=labels)
 
     def training_step(self, batch, batch_idx):
         outputs = self(batch)

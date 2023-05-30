@@ -59,12 +59,13 @@ def generate_from_loader(valid_gen, model, tokenizer,device):
 
 
 def generate_from_sentences(text, model, tokenizer,device):
-    text=[tokenizer.eos_token +  i + tokenizer.eos_token for i in text]
-    batch=tokenizer(text, padding=True, return_tensors="pt")
+    text=[tokenizer.eos_token +  i  for i in text]
+    start=[ tokenizer.eos_token for _ in text]
+    batch=tokenizer(text,start, padding=True, return_tensors="pt")
 
     input_ids = batch["input_ids"].to(device)
     attention_mask = batch["attention_mask"].to(device)
-    #token_type_ids = batch['token_type_ids'].to(device)
+    token_type_ids = batch['token_type_ids'].to(device)
 
     # Set token type IDs for the prompts
     max_prompt_length=35
@@ -78,7 +79,7 @@ def generate_from_sentences(text, model, tokenizer,device):
     # labels = input_ids.clone()
     #pred_caps_1=gen(model, batch,tokenizer)
     max_length=input_ids.shape[1] + max_prompt_length
-    generated_ids = model.generate(input_ids=input_ids,attention_mask=attention_mask, max_length=max_length, do_sample=True)
+    generated_ids = model.generate(input_ids=input_ids,attention_mask=attention_mask, max_length=max_length, do_sample=True,token_type_ids=token_type_ids)
     #generated_ids = model.generate(input_ids=input_ids, attention_mask=attention_mask,
                                   # token_type_ids=token_type_ids, max_length=max_length)
     pred_caps = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
@@ -100,15 +101,15 @@ class Dataset(Dataset):
         self.ids_2_sample={}
         self.keys=[str(i)+':'+str(j) for i,j in zip(data['ids'],data['gpt_ids'])]
         values = zip(data['lyrics'], data['prompts'])
-
+        #its the same vali and train, but keys are gonna be different
+        self.ids_2_sample = {k: v for k, v in zip(self.keys, values)}
         valid_index = int(.10 * len(self.keys))
 
         if training:
             self.keys = self.keys[valid_index:]
-            self.ids_2_sample = {k: v for k, v in zip(self.keys, values)}
+
         else:
             self.keys = self.keys[0:valid_index]
-            self.ids_2_sample = {k: v for k, v in zip(self.keys, values)}
 
     def __len__(self):
         return len(self.keys)
@@ -170,7 +171,6 @@ class ContextAwareDataCollatorForGeneration:
             contexts.append(self.eos_token + context )
             prompts.append(prompt)
 
-
         tokens=self.tokenizer(contexts,start_tokens,padding=True, return_token_type_ids=True, return_tensors="pt")
         return tokens,(contexts,prompts)
 
@@ -178,10 +178,10 @@ class ContextAwareDataCollatorForGeneration:
        return self.collator(batch)
 
 # test
-from tqdm import tqdm
-#train_dataset =Dataset('/graphics/scratch2/staff/Hassan/genius_crawl/lyrics_to_prompts.csv',context_size=5,training=False)
+# from tqdm import tqdm
+# train_dataset =Dataset('/graphics/scratch2/staff/Hassan/genius_crawl/lyrics_to_prompts.csv',context_size=5,training=True)
 # for i, j in tqdm(train_dataset):
-#     pass
+#      print(i, ' ', j)
     # try:
     #    d= '' + j
     # except:
