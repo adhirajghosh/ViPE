@@ -39,7 +39,7 @@ class GPT2Convertor(LightningModule):
         #     [[-100 if token_type_ids[j][i] == 0.0 else token for i, token in enumerate(label)] for j, label in
         #      enumerate(input_ids)]).to(self.params.device)
 
-        return self.model(input_ids, attention_mask=attention_mask, labels=labels)
+        return self.model(input_ids, attention_mask=attention_mask, labels=labels, token_type_ids=token_type_ids)
 
     def training_step(self, batch, batch_idx):
         outputs = self(batch)
