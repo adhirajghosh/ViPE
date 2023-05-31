@@ -7,7 +7,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --time=72:00:00                     # job will be cancelled after 6h 30min, max is 72h
 #SBATCH --output=/mnt/lustre/lensch/hshahmohammadi86/checkpoints/logs/ml_cloud/run_%A_%a.out
-#SBATCH --array=0-1%1
+#SBATCH --array=2-3%1
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=hasan.karezan@gmail.com
 # insert your commands here
@@ -27,7 +27,7 @@ cxs=${context_sizes[$SLURM_ARRAY_TASK_ID]}
 # Get the learning rate for the current job index
 #lr=${lrs[$SLURM_ARRAY_TASK_ID]}
 
-srun  python training_ml.py --ml 1  --batch_size 50 --learning_rate 2e-4 --context_length "$cxs"
+srun  python training_ml.py --ml 1  --batch_size 50 --learning_rate 5e-5 --context_length "$cxs"
 
 #echo '---------------- Status of this machine: ----------------'
 #nvidia-smi
