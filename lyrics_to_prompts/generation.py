@@ -1,7 +1,7 @@
 from modeling import GPT2Convertor
 
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '4'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 from torch.utils.data import Dataset, DataLoader
 import torch
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -10,15 +10,16 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from utils import Dataset, ContextAwareDataCollator,ContextAwareDataCollatorForGeneration
 from pytorch_lightning import  Trainer
 from modeling import GPT2Convertor
-from utils import dotdict, generate_from_loader,generate_from_sentences
+from utils import dotdict, generate_from_loader,generate_from_sentences,to_coco_format,DatasetTest
 import json
 import argparse
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="train hehe?")
 
     parser.add_argument(
-        "--model_name", type=str, default='gpt2-medium', help="which gpt2 version to use?"
+        "--model_name", type=str, default='gpt2', help="which gpt2 version to use?"
     )
 
     parser.add_argument(
@@ -26,6 +27,9 @@ def parse_args():
     )
     parser.add_argument(
         "--check_path", type=str, default='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/', help="path to save the model"
+    )
+    parser.add_argument(
+        "--ml", type=int,default=1
     )
     parser.add_argument(
         "--batch_size", type=int, default=30
@@ -64,31 +68,57 @@ def main():
     hparams.learning_rate =args.learning_rate
     hparams.device=args.device
     hparams.warmup_steps=args.warmup_steps
-    check_path=args.check_path
-    check_path = check_path + '{}_v1.0/'.format(args.model_name)
+
+    if args.ml == 0:
+        check_path = args.check_path
+        check_path = check_path + '{}_v2.0/'.format(args.model_name)
+        hparams.data_dir = args.data_set_dir
+    else:
+        check_path = args.check_path
+        check_path = check_path + 'ml_logs_checkpoints/{}/'.format(args.model_name)
 
     model = GPT2Convertor(hparams)
 
-    checkpoint = torch.load(check_path+hparams.model_name +"-v1.ckpt", map_location=lambda storage, loc: storage)
+    check_point_name='gpt2.ckpt'
+    check_point_name='gpt2_context_ctx_5_lr_5e-05-v4.ckpt'
+    #check_point_name='gpt2_context_ctx_1_lr_5e-05-v4.ckpt'
+    #check_point_name='gpt2-medium-v4.ckpt'
+
+    # check_point_name='gpt2_token_type_ids_context_ctx_5_lr_5e-05.ckpt'
+
+    checkpoint = torch.load(check_path+check_point_name, map_location=lambda storage, loc: storage)
     model.load_state_dict(checkpoint['state_dict'])
-    model.to(args.device)
     print('checkpoint loaded')
-
-
     tokenizer = model.tokenizer
-    tokenizer.padding_side='left'
-    model = model.model
+    model=model.model
+    model.to(args.device)
 
-    train_dataset =Dataset(args.data_set_dir,context_size=5,training=False)
+    #model = model.module.model
+
+    valid_dataset =DatasetTest(args.data_set_dir,context_size=hparams.context_length,training=False)
     data_collator = ContextAwareDataCollatorForGeneration(tokenizer)
 
-    dataloader = DataLoader(train_dataset, batch_size=8,
-                                  shuffle=False, num_workers=2, collate_fn=data_collator)
+    dataloader = DataLoader(valid_dataset, batch_size=280,
+                                  shuffle=False, num_workers=16, collate_fn=data_collator)
 
-    text=[' feels like the weight of the world; like god in heaven gave me a turn ;', 'dont cling to me i swear i cant fix you ;']
-    generate_from_sentences(text,model, tokenizer,hparams.device)
-    #name2cap = generate_from_loader(dataloader, model, tokenizer,hparams.device)
+    # text=[' feels like the weight of the world; like god in heaven gave me a turn ', 'dont cling to me i swear i cant fix you ;']
+    # generate_from_sentences(text,model, tokenizer,hparams.device)
+    id2cap, id2ground_truth = generate_from_loader(dataloader, model, tokenizer,hparams.device)
 
+    results=[]
+    for id, cap in id2cap.items():
+        results.append({'image_id': id, 'caption': cap})
+
+    jsonString = json.dumps(results)
+    saving_dir=check_path+'evaluation/'
+    os.makedirs(os.path.dirname(saving_dir), exist_ok=True)
+    jsonFile = open(saving_dir + "generation_{}_.json".format(check_point_name), "w")
+    jsonFile.write(jsonString)
+    jsonFile.close()
+
+    if not os.path.exists(saving_dir+'/ground_truth.json'):
+        output_json = saving_dir + "ground_truth.json"
+        to_coco_format(id2ground_truth, output_json)
 
 if __name__ == "__main__":
     main()
