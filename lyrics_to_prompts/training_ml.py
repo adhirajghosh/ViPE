@@ -1,6 +1,6 @@
 import os
 #os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-
+import torch
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
@@ -62,6 +62,10 @@ def parse_args():
         "--ml", type=int, default=1, help='set to 1 to use ml paths'
     )
 
+    parser.add_argument(
+        "--load_checkpoint", type=int, default=3, help='which checkpoint version to load if resume training'
+    )
+
     args = parser.parse_args()
     return args
 
@@ -79,6 +83,8 @@ def main():
     hparams.device=args.device
     hparams.warmup_steps=args.warmup_steps
     max_epochs=args.epochs
+    load_checkpoint=args.load_checkpoint
+
 
     if args.ml ==0:
         check_path = args.check_path
@@ -106,11 +112,18 @@ def main():
     model = GPT2Convertor(hparams)
     #model.to(args.device)
 
-    # checkpoint = torch.load(check_path+"correct_bert_first_layer_frozen_vit.ckpt", map_location=lambda storage, loc: storage)
-    # model.load_state_dict(checkpoint['state_dict'])
-    # print('checkpoint loaded')
+    if load_checkpoint > -1:
+        if load_checkpoint==0:
+            check_name=check_path+model_name + '.ckpt'
+        else:
+            check_name = check_path + model_name +'-v{}.ckpt'.format(load_checkpoint)
+
+        checkpoint = torch.load(check_name, map_location=lambda storage, loc: storage)
+        model.load_state_dict(checkpoint['state_dict'])
+        print('checkpoint loaded: ',model_name +'-v{}.ckpt'.format(load_checkpoint) )
+
     #trainer=Trainer(accelerator='gpu', devices=8, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,max_epochs=max_epochs,strategy='ddp')
-    trainer = Trainer(accelerator='gpu', devices=9, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,    max_epochs=max_epochs,strategy='ddp')
+    trainer = Trainer(accelerator='gpu', devices=8, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,  max_epochs=max_epochs,strategy='ddp')
     trainer.fit(model)
 
 if __name__ == "__main__":
