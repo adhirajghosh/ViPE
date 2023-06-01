@@ -3,7 +3,8 @@ import gc
 import numpy as np
 import tomesd
 import torch
-
+import torch.distributed as dist
+import torch.nn as nn
 from diffusers import StableDiffusionInstructPix2PixPipeline, StableDiffusionControlNetPipeline, ControlNetModel, UNet2DConditionModel
 from diffusers.schedulers import EulerAncestralDiscreteScheduler, DDIMScheduler
 from text_to_video_pipeline import TextToVideoPipeline
@@ -16,7 +17,7 @@ on_huggingspace = os.environ.get("SPACE_AUTHOR_NAME") == "PAIR"
 class ModelType(Enum):
     Text2Video = 1,
 
-class Model:
+class Model(nn.Module):
     def __init__(self, device, dtype, **kwargs):
         self.device = device
         self.dtype = dtype
@@ -64,6 +65,7 @@ class Model:
                          negative_prompt=negative_prompt[frame_ids].tolist(),
                          latents=latents,
                          generator=self.generator,
+                         strength = 0.1,
                          **kwargs)
 
     def inference(self, split_to_chunks=False, chunk_size=8, **kwargs):
@@ -112,15 +114,15 @@ class Model:
             return result
         else:
             self.generator.manual_seed(seed)
-            return self.pipe(prompt=prompt, negative_prompt=negative_prompt, generator=self.generator, **kwargs).images
+            return self.pipe(prompt=prompt, negative_prompt=negative_prompt, generator=self.generator, strength = 0.05, **kwargs).images
 
     def process_text2video(self,
                            prompt,
                            model_name="dreamlike-art/dreamlike-photoreal-1.0",
-                           motion_field_strength_x=12,
-                           motion_field_strength_y=12,
-                           t0=44,
-                           t1=47,
+                           motion_field_strength_x=20,
+                           motion_field_strength_y=20,
+                           t0=941,
+                           t1=947,
                            n_prompt="",
                            chunk_size=8,
                            video_length=8,
@@ -130,7 +132,7 @@ class Model:
                            fps=2,
                            use_cf_attn=True,
                            use_motion_field=True,
-                           smooth_bg=False, #TODO: CHANGE TO TRUE
+                           smooth_bg=True, #TODO: CHANGE TO TRUE
                            smooth_bg_strength=0.4,
                            path=None):
         print("Module Text2Video")
@@ -166,7 +168,7 @@ class Model:
                                 negative_prompt=negative_prompts,
                                 width=resolution,
                                 num_inference_steps=50,
-                                guidance_scale=7.5,
+                                guidance_scale=20, #before it was 17.5
                                 guidance_stop_step=1.0,
                                 t0=t0,
                                 t1=t1,
