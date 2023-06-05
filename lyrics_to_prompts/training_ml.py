@@ -1,6 +1,7 @@
 import os
 #os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 import torch
+torch.set_float32_matmul_precision('medium')
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
@@ -122,8 +123,8 @@ def main():
         model.load_state_dict(checkpoint['state_dict'])
         print('checkpoint loaded: ',model_name +'-v{}.ckpt'.format(load_checkpoint) )
 
-    #trainer=Trainer(accelerator='gpu', devices=8, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,max_epochs=max_epochs,strategy='ddp')
-    trainer = Trainer(accelerator='gpu', devices=8, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,  max_epochs=max_epochs,strategy='ddp')
+    #trainer=Trainer(accelerator='gpu', devices=9, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,max_epochs=max_epochs,strategy='ddp')
+    trainer = Trainer(accelerator='gpu', devices=9, callbacks=[checkpoint_callback, early_stop], logger=tb_logger,  max_epochs=max_epochs,strategy='ddp')
     trainer.fit(model)
 
 if __name__ == "__main__":
