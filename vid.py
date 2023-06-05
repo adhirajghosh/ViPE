@@ -11,6 +11,7 @@ import torch
 from torch import autocast
 from torchvision.utils import make_grid
 from keybert import KeyBERT
+from sklearn.metrics.pairwise import cosine_similarity
 
 @torch.no_grad()
 #from stable diffusion main code
@@ -76,7 +77,6 @@ def diffuse(
 
     return image
 
-
 def slerp(t, v0, v1, DOT_THRESHOLD=0.9995):
     """ helper function to spherically interpolate two arrays v1 v2 """
 
@@ -88,6 +88,33 @@ def slerp(t, v0, v1, DOT_THRESHOLD=0.9995):
 
     dot = np.sum(v0 * v1 / (np.linalg.norm(v0) * np.linalg.norm(v1)))
     if np.abs(dot) > DOT_THRESHOLD:
+        v2 = (1 - t) * v0 + t * v1
+    else:
+        theta_0 = np.arccos(dot)
+        sin_theta_0 = np.sin(theta_0)
+        theta_t = theta_0 * t
+        sin_theta_t = np.sin(theta_t)
+        s0 = np.sin(theta_0 - theta_t) / sin_theta_0
+        s1 = sin_theta_t / sin_theta_0
+        v2 = s0 * v0 + s1 * v1
+
+    if inputs_are_torch:
+        v2 = torch.from_numpy(v2).to(input_device)
+
+    return v2
+
+def slerp2(t, v0, v1, t_threshold = 0.75):
+    """ helper function to spherically interpolate two arrays v1 v2 """
+
+    if not isinstance(v1, np.ndarray):
+        inputs_are_torch = True
+        input_device = v0.device
+        v0 = v0.cpu().numpy()
+        v1 = v1.cpu().numpy()
+
+    dot = np.sum(v0 * v1 / (np.linalg.norm(v0) * np.linalg.norm(v1)))
+
+    if t < t_threshold:
         v2 = (1 - t) * v0 + t * v1
     else:
         theta_0 = np.arccos(dot)
@@ -139,6 +166,34 @@ def create_image(prompts=["man day phoned someone"],  # prompts to dream about
 
     return frame_index
 
+def new_embeds(embed1, embed2, chunk_size=8):
+    device = embed1.device
+    embed1_a, *embed1 = embed1
+    embed2_a, *embed2 = embed2
+
+    final_embed_cuda = []
+
+    for i in range(int(len(embed1_a) / chunk_size) + 1):
+        subembed_a = embed1_a[i * chunk_size:i * chunk_size + chunk_size]
+        new_size = len(subembed_a)
+        ref = []
+        sim = []
+
+        for j in range(0, len(embed2_a) - (new_size - 1), 1):
+            subembed_b = embed2_a[j:j + new_size, :]
+            similarity = cosine_similarity(subembed_a.cpu().flatten().reshape(1, -1), subembed_b.cpu().flatten().reshape(1, -1))
+            sim.append(similarity[0][0])
+            ref.append(subembed_b)
+
+        most_similar_index = np.argmax(sim)
+        most_similar_array = ref[most_similar_index]
+        final_embed_cuda.append(most_similar_array)
+
+    final_embed = [tensor.cpu() for tensor in final_embed_cuda]
+    embed2_final = np.concatenate(final_embed, axis=0)
+
+    return torch.from_numpy(np.expand_dims(embed2_final, axis=0)).to(device)
+
 
 
 def create_video(
@@ -152,7 +207,7 @@ def create_video(
                  "you am need her brightest toolbox middle her house"],  # prompts to dream about
         seeds=[100, 200, 300],
         gpu=1,  # id of the gpu to run on
-        name='all-star-L1-3',  # name of this project, for the output directory
+        chunk_interpolation = True,
         rootdir='./results',
         num_steps=100,  # number of steps between each pair of sampled points
         frame_index = 0,
@@ -175,10 +230,11 @@ def create_video(
     os.makedirs(outdir, exist_ok=True)
 
     # # init all of the models and move them to a given GPU
-    pipe = StableDiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5")
+    pipe = StableDiffusionPipeline.from_pretrained("dreamlike-art/dreamlike-photoreal-2.0")
     kw_model = KeyBERT()
 
     torch_device = f"cuda:{gpu}"
+    # pipe.safety_checker = False
     pipe.unet.to(torch_device)
     pipe.vae.to(torch_device)
     pipe.text_encoder.to(torch_device)
@@ -202,7 +258,6 @@ def create_video(
 
     # Take first embed and set it as starting point, leaving rest as list we'll loop over.
     prompt_embedding_a, *prompt_embeddings = prompt_embeddings
-
     # Take first seed and use it to generate init noise
     init_seed, *seeds = seeds
     init_a = torch.randn(
@@ -232,8 +287,12 @@ def create_video(
         for i, t in enumerate(np.linspace(0, 1, num_steps)):
 
             print("generating... ", frame_index)
+            if chunk_interpolation:
+                prompt_embedding_b_mod = new_embeds(prompt_embedding_a, prompt_embedding_b)
+                cond_embedding = slerp(float(t), prompt_embedding_a, prompt_embedding_b_mod)
+            else:
+                cond_embedding = slerp(float(t), prompt_embedding_a, prompt_embedding_b)
 
-            cond_embedding = slerp(float(t), prompt_embedding_a, prompt_embedding_b)
             init = slerp(float(t), init_a, init_b)
 
             with autocast("cuda"):
@@ -245,7 +304,11 @@ def create_video(
             im.save(outpath)
             frame_index += 1
 
-        prompt_embedding_a = prompt_embedding_b
+        if chunk_interpolation:
+            prompt_embedding_a = prompt_embedding_b_mod
+        else:
+            prompt_embedding_a = prompt_embedding_b
+
         init_a = init_b
 
     return frame_index

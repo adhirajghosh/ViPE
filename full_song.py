@@ -57,7 +57,7 @@ def main():
     frame_index = 0
     for i, stanza in enumerate(full_song):
         for j, line in enumerate(stanza):
-            if  mod is False:
+            if mod is False:
                 new_lyric = change_lyric(args.embedding, line, word_score)
                 if args.extend:
                     new_lyric = text_pipe(new_lyric+',', num_return_sequences=1)[0]["generated_text"]
@@ -72,6 +72,7 @@ def main():
                      seeds = np.random.randint(100,999, size=(len(full_song[i]))),
                      gpu = args.gpu,
                      rootdir = output_dir,
+                     chunk_interpolation = True,
                      num_steps = args.steps,
                      frame_index = frame_index
                      )

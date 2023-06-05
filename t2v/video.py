@@ -6,6 +6,7 @@ import numpy as np
 import os
 from utils import *
 from transformers import pipeline
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
@@ -36,10 +37,10 @@ def main():
     full_song = song_to_list(args.song_path)
 
     model_name = ['dreamlike-art/dreamlike-photoreal-2.0', 'runwayml/stable-diffusion-v1-5']
-    model = Model(device=args.gpu, dtype=torch.float16)
+    model = Model(device=args.gpu, dtype=torch.float32)
     text_pipe = pipeline('text-generation', model='./prompt-extend', device=args.gpu, max_new_tokens=30)
 
-    params = {"t0": 44, "t1": 47, "motion_field_strength_x": 12, "motion_field_strength_y": 12, "video_length": 30}
+    params = {"t0": 41, "t1": 47, "motion_field_strength_x": 20, "motion_field_strength_y": 20, "smooth_bg": True, "video_length": 30}
 
     line_no = 1
     for stanza in full_song:
