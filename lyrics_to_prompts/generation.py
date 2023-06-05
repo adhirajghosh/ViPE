@@ -1,7 +1,7 @@
 from modeling import GPT2Convertor
 
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+
 from torch.utils.data import Dataset, DataLoader
 import torch
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -19,7 +19,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="train hehe?")
 
     parser.add_argument(
-        "--model_name", type=str, default='gpt2', help="which gpt2 version to use?"
+        "--model_name", type=str, default='gpt2-medium', help="which gpt2 version to use?"
     )
 
     parser.add_argument(
@@ -28,9 +28,7 @@ def parse_args():
     parser.add_argument(
         "--check_path", type=str, default='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/', help="path to save the model"
     )
-    parser.add_argument(
-        "--ml", type=int,default=1
-    )
+
     parser.add_argument(
         "--batch_size", type=int, default=30
     )
@@ -46,11 +44,22 @@ def parse_args():
         "--warmup_steps", type=int, default=1e3
     )
     parser.add_argument(
-        "--context_length", type=int, default=5, help='number of previous lines from lyrics as the context'
+        "--context_length", type=int, default=3, help='number of previous lines from lyrics as the context'
     )
 
     parser.add_argument(
         "--device", type=str, default='cuda', help='cuda or cpu?'
+    )
+
+    parser.add_argument(
+        "--gpu", type=int, default=1, help='which gpu?'
+    )
+    parser.add_argument(
+        "--ml", type=int, default=1
+    )
+
+    parser.add_argument(
+        "--random", type=int, default=0, help='set 1 to generate with sampling'
     )
 
     args = parser.parse_args()
@@ -59,6 +68,7 @@ def parse_args():
 def main():
 
     args = parse_args()
+    os.environ['CUDA_VISIBLE_DEVICES'] =str(args.gpu)
 
     hparams = dotdict({})
     hparams.data_dir = args.data_set_dir
@@ -80,12 +90,19 @@ def main():
     model = GPT2Convertor(hparams)
 
     check_point_name='gpt2.ckpt'
-    check_point_name='gpt2_context_ctx_5_lr_5e-05-v4.ckpt'
-    #check_point_name='gpt2_context_ctx_1_lr_5e-05-v4.ckpt'
+    check_point_name='gpt2_context_ctx_7_lr_5e-05-v4.ckpt'
+    #check_point_name = 'gpt2_context_ctx_7_lr_5e-05-v4.ckpt'
+    #check_point_name='gpt2_context_ctx_0_lr_5e-05-v2.ckpt'
+    #check_point_name = 'gpt2-medium_context_ctx_0_lr_5e-05-v1.ckpt'
+    # check_point_name='gpt2-medium_context_ctx_0_lr_5e-05-v2.ckpt'
+    check_point_name='gpt2-medium_context_ctx_3_lr_5e-05-v3.ckpt'
+    check_point_name='{}_context_ctx_{}_lr_5e-05-v4.ckpt'.format(args.model_name,hparams.context_length )
+
+
     #check_point_name='gpt2-medium-v4.ckpt'
 
     # check_point_name='gpt2_token_type_ids_context_ctx_5_lr_5e-05.ckpt'
-
+    #check_path='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/ml_logs_checkpoints/gpt2_old/'
     checkpoint = torch.load(check_path+check_point_name, map_location=lambda storage, loc: storage)
     model.load_state_dict(checkpoint['state_dict'])
     print('checkpoint loaded')
@@ -93,17 +110,17 @@ def main():
     model=model.model
     model.to(args.device)
 
-    #model = model.module.model
 
+    text=[' feels like the weight of the world; like god in heaven gave me a turn ', 'dont cling to me i swear i cant fix you ;']
+    generate_from_sentences(text,model, tokenizer,hparams.device,do_sample=True,top_k=0,num_beams=0)
+
+   # use the following code for generation in the coco format for evaluation
     valid_dataset =DatasetTest(args.data_set_dir,context_size=hparams.context_length,training=False)
     data_collator = ContextAwareDataCollatorForGeneration(tokenizer)
 
-    dataloader = DataLoader(valid_dataset, batch_size=280,
-                                  shuffle=False, num_workers=16, collate_fn=data_collator)
-
-    # text=[' feels like the weight of the world; like god in heaven gave me a turn ', 'dont cling to me i swear i cant fix you ;']
-    # generate_from_sentences(text,model, tokenizer,hparams.device)
-    id2cap, id2ground_truth = generate_from_loader(dataloader, model, tokenizer,hparams.device)
+    dataloader = DataLoader(valid_dataset, batch_size= hparams.batch_size,
+                                  shuffle=False, num_workers=16, collate_fn=data_collator,prefetch_factor=3)
+    id2cap, id2ground_truth = generate_from_loader(dataloader, model, tokenizer,hparams.device, args.random)
 
     results=[]
     for id, cap in id2cap.items():
@@ -112,7 +129,10 @@ def main():
     jsonString = json.dumps(results)
     saving_dir=check_path+'evaluation/'
     os.makedirs(os.path.dirname(saving_dir), exist_ok=True)
-    jsonFile = open(saving_dir + "generation_{}_.json".format(check_point_name), "w")
+    if args.random > 0:
+        jsonFile = open(saving_dir + "random_generation_{}_.json".format(check_point_name), "w")
+    else:
+        jsonFile = open(saving_dir + "generation_{}_.json".format(check_point_name), "w")
     jsonFile.write(jsonString)
     jsonFile.close()
 

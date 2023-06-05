@@ -11,8 +11,16 @@ from utils import load_pkl
 from utils import to_coco_format
 import os
 
-saving_dir='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/ml_logs_checkpoints/gpt2/evaluation/'
-model_name='gpt2_context_ctx_5_lr_5e-05-v4.ckpt_.json'
+saving_dir='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/ml_logs_checkpoints/gpt2-medium/evaluation/'
+
+#saving_dir='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/gpt2-medium_v2.0/evaluation/'
+
+model_name='gpt2_context_ctx_0_lr_5e-05-v4.ckpt_.json'
+model_name='gpt2-medium_context_ctx_5_lr_5e-05-v4.ckpt_.json'
+#model_name='gpt2-medium_context_ctx_3_lr_5e-05-v3.ckpt_.json'
+
+do_sample=False
+
 GT = '{}ground_truth.json'.format(saving_dir)
 # create coco object and cocoRes object
 coco = COCO(GT)
@@ -36,9 +44,12 @@ coco = COCO(GT)
 # jsonFile.close()
 ################################################
 
+file_name=saving_dir +'generation_{}'.format(model_name)
 
+if do_sample:
+    file_name = saving_dir + 'random_generation_{}'.format(model_name)
 
-cocoRes = coco.loadRes(saving_dir +'generation_{}'.format(model_name))
+cocoRes = coco.loadRes(file_name)
 #cocoRes = coco.loadRes(SAVING_DIR + "testing.json")
 
 # create cocoEval object by taking coco and cocoRes
@@ -60,6 +71,9 @@ for metric, score in cocoEval.eval.items():
     evaluation_result[metric]=score
 
 jsonString = json.dumps(evaluation_result)
-jsonFile = open(saving_dir +"results{}.json".format(model_name), "w")
+if do_sample:
+    jsonFile = open(saving_dir +"random_results_{}.json".format(model_name), "w")
+else:
+    jsonFile = open(saving_dir + "results_{}.json".format(model_name), "w")
 jsonFile.write(jsonString)
 jsonFile.close()

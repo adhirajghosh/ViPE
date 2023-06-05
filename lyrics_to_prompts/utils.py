@@ -14,38 +14,49 @@ class dotdict(dict):
     __delattr__ = dict.__delitem__
 
 
-def generate_from_loader(valid_gen, model, tokenizer,device):
+def generate_from_loader(valid_gen, model, tokenizer,device,do_sample):
     transformers.utils.logging.set_verbosity_error()
     id2cap={}
     ground_truth={}
 
+    if do_sample> 0:
+        do_sample=True
+    else:
+        do_sample= False
+
+    all_ids=[]
+    all_generated_ids=[]
+    all_prompts=[]
+
+    # Set token type IDs for the prompts
+    max_prompt_length = 30
+
+
     for bc,batch in enumerate(tqdm(valid_gen)):
 
-        # if bc<133:
-        #     continue
 
         tokens=batch['tokens']
-        ids=batch['keys']
-        input_ids = tokens["input_ids"].to(device)
-        attention_mask = tokens["attention_mask"].to(device)
-
-        # Set token type IDs for the prompts
-        max_prompt_length=30
-        max_length=input_ids.shape[1] + max_prompt_length
-
-        # Generate text using multiple GPUs
+        # Generate text
         with torch.no_grad():
-            generated_ids = model.generate(input_ids=input_ids,attention_mask=attention_mask, max_length=max_length)
+            input_ids = tokens["input_ids"].to(device)
+            attention_mask = tokens["attention_mask"].to(device)
+            max_length = input_ids.shape[1] + max_prompt_length
+            generated_ids = model.generate(input_ids=input_ids,attention_mask=attention_mask, max_length=max_length,do_sample=do_sample)
 
-        pred_caps = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
-        input_prompts = tokenizer.batch_decode(input_ids, skip_special_tokens=True)
+        all_generated_ids.append(generated_ids)
+        all_ids.append( batch['keys'])
+        all_prompts.append(batch['prompts'])
 
+    print('processing the generated captions')
+    for bc, ids, in enumerate(tqdm(all_ids)):
+
+        pred_caps = tokenizer.batch_decode(all_generated_ids[bc][:,-max_prompt_length:], skip_special_tokens=True)
+        #input_prompts = tokenizer.batch_decode(input_ids, skip_special_tokens=True)
         for c, (id, pred_cap) in enumerate(zip(ids,pred_caps)):
-
-            generated_part = pred_cap[len(input_prompts[c]):][1:]
-
+            generated_part = pred_cap[1:]
             id2cap[id] = generated_part
-            ground_truth[id] = batch['prompts'][c][1:]
+            ground_truth[id] = all_prompts[bc][c][1:]
+
             # print(input_prompts[c])
             # print(generated_part)
             # print( ground_truth[id])
@@ -54,7 +65,7 @@ def generate_from_loader(valid_gen, model, tokenizer,device):
     return id2cap,ground_truth
 
 
-def generate_from_sentences(text, model, tokenizer,device):
+def generate_from_sentences(text, model, tokenizer,device,do_sample,top_k, num_beams):
     text=[tokenizer.eos_token +  i  + tokenizer.eos_token for  i in text]
     #start=[ tokenizer.eos_token for _ in text]
     batch=tokenizer(text, padding=True, return_tensors="pt")
@@ -75,7 +86,15 @@ def generate_from_sentences(text, model, tokenizer,device):
     # labels = input_ids.clone()
     #pred_caps_1=gen(model, batch,tokenizer)
     max_length=input_ids.shape[1] + max_prompt_length
-    generated_ids = model.generate(input_ids=input_ids,attention_mask=attention_mask, max_length=max_length, do_sample=True)
+    if num_beams>0:
+        generated_ids = model.generate(input_ids=input_ids, attention_mask=attention_mask, max_length=max_length,
+                                       do_sample=False, num_beams=num_beams)
+    elif top_k >0:
+        generated_ids = model.generate(input_ids=input_ids,attention_mask=attention_mask, max_length=max_length, do_sample=do_sample,top_k=top_k)
+    else:
+        generated_ids = model.generate(input_ids=input_ids, attention_mask=attention_mask, max_length=max_length,
+                                       do_sample=do_sample)
+
     #generated_ids = model.generate(input_ids=input_ids, attention_mask=attention_mask,
                                   # token_type_ids=token_type_ids, max_length=max_length)
     pred_caps = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
