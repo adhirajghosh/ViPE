@@ -49,7 +49,7 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--do_sample", type=int, default=0, help='set 1 to generate with sampling'
+        "--do_sample", type=int, default=1, help='set 1 to generate with sampling'
     )
 
     parser.add_argument(
@@ -103,7 +103,7 @@ def main():
     lyrics=[line for line in lyrics.split('\n') if len(line.split(' ')) > 1]
 
     #modify this to change the influence  of the context size
-    hparams.context_length=20
+    hparams.context_length=0
 
     for _ in range(hparams.context_length+1):
         lyrics = ['null'] + lyrics

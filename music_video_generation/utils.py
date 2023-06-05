@@ -17,7 +17,7 @@ def generate_from_sentences(text, model, tokenizer,device,do_sample):
     #token_type_ids = batch['token_type_ids'].to(device)
 
     # Set token type IDs for the prompts
-    max_prompt_length=35
+    max_prompt_length=50
     # token_type_ids[attention_mask == 0]=1
     #prompts_token_type_ids = torch.ones(token_type_ids.shape[0],max_prompt_length, dtype=torch.long).to(device)
     ##Extend token_type_ids to cover the prompt segment
