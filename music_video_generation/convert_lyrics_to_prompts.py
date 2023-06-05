@@ -72,7 +72,7 @@ def main():
     hparams.learning_rate =args.learning_rate
     hparams.device=args.device
     hparams.warmup_steps=args.warmup_steps
-    do_sample =1 if args.do_sample >0 else 0
+    do_sample =True if args.do_sample >0 else False
 
     if args.ml == 0:
         check_path = args.check_path
@@ -113,7 +113,7 @@ def main():
         lyrics[c] = text
 
     lyrics.pop(0)
-    prompts=generate_from_sentences(lyrics, model, tokenizer, hparams.device)
+    prompts=generate_from_sentences(lyrics, model, tokenizer, hparams.device,do_sample)
 
     with open(args.lyrics+'_prompts', 'w') as file:
 
