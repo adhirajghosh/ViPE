@@ -5,8 +5,9 @@ import numpy as np
 import os
 from transformers import pipeline
 from utils import *
-from vid import create_video
+from vid import create_video, create_video2
 from logger import Logger
+from statistics import mean
 
 
 def parse_args():
@@ -25,7 +26,7 @@ def parse_args():
     # parser.add_argument('--log', help='name of log file',
     #                     default='./results/song-2/all-star-fasttext-extend_old.txt')
     parser.add_argument('--extend', help='use prompt extend or not. Type --extend or --no-extend',default=True, action=argparse.BooleanOptionalAction)
-    parser.add_argument('--lemma', help='root word for all words. Type --lemma or --no-lemma',default=True, action=argparse.BooleanOptionalAction)
+    parser.add_argument('--chunk', help='chunk interpolation. Type --chunk or --no-chunk',default=True, action=argparse.BooleanOptionalAction)
     parser.add_argument('--extend_model', help='path to model extender',
                         default='./prompt-extend')
 
@@ -33,7 +34,7 @@ def parse_args():
     return args
 
 def main():
-    mod = True
+
     csv.field_size_limit(sys.maxsize)
     args = parse_args()
     song_name = args.song_path.split('/')[-1]
@@ -44,10 +45,7 @@ def main():
     gif_dir = os.path.join(args.result_dir,song_name, args.name+".gif")
     sys.stdout = Logger(log_dir)
     print("Loading full song")
-    full_song = song_to_list(args.song_path, args.lemma)
-    if mod == False:
-        print("Loading Concreteness index")
-        word_score = concrete_score(args.concreteness_path)
+    full_song = song_to_list(args.song_path)
 
     if args.extend == True:
         print("Using prompt extender")
@@ -55,31 +53,31 @@ def main():
 
     #change the list full_song
     frame_index = 0
+
+    total_clip = []
     for i, stanza in enumerate(full_song):
         for j, line in enumerate(stanza):
-            if mod is False:
-                new_lyric = change_lyric(args.embedding, line, word_score)
-                if args.extend:
-                    new_lyric = text_pipe(new_lyric+',', num_return_sequences=1)[0]["generated_text"]
+            if args.extend:
+                new_lyric = text_pipe(line + ',', num_return_sequences=1)[0]["generated_text"]
                 full_song[i][j] = new_lyric
-            else:
-                if args.extend:
-                    new_lyric = text_pipe(line + ',', num_return_sequences=1)[0]["generated_text"]
-                    full_song[i][j] = new_lyric
 
         print(full_song[i])
-        new_frame_index = create_video(prompts = full_song[i],
+        new_frame_index, embeds, ims = create_video2(prompts = full_song[i],
                      seeds = np.random.randint(100,999, size=(len(full_song[i]))),
                      gpu = args.gpu,
                      rootdir = output_dir,
-                     chunk_interpolation = True,
+                     chunk_interpolation = args.chunk,
                      num_steps = args.steps,
                      frame_index = frame_index
                      )
         frame_index = new_frame_index
+        # clip_score = cond_clip(embeds, ims, gpu = args.gpu)
+        # print("Inner clip score is ", clip_score)
+        # total_clip.append(clip_score)
 
+    # clip_score_final = mean(total_clip)
+    # print("Clip Score is ", clip_score_final)
     gif(output_dir, gif_dir, args.fps)
 
 if __name__ == '__main__':
     fire.Fire(main)
-
