@@ -2,9 +2,13 @@ import csv
 import gensim
 import sys
 import imageio
+import torch
 import os
 import spacy
 from moviepy.editor import VideoFileClip, concatenate_videoclips
+import clip
+from transformers import AutoProcessor, AutoTokenizer, CLIPModel
+
 
 def song_to_list(path, lemma=False):
     # with open(path) as f:
@@ -105,7 +109,7 @@ def change_lyric(emb_path, lyric, word_score):
 def gif(result_path, output_path, fps):
     images = []
     for filename in os.listdir(result_path):
-        images.append(imageio.imread(result_path + filename))
+        images.append(imageio.imread(os.path.join(result_path,filename)))
     imageio.mimsave(output_path, images, fps = fps)
 
 def merge_mp4(folder_path, output_path):
@@ -128,3 +132,33 @@ def merge_mp4(folder_path, output_path):
 
     # Write the final merged video to the output file
     final_video.write_videofile(output_path, codec='libx264')
+
+
+def cond_clip(embeds, images, gpu="cuda"):
+    model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
+    processor = AutoProcessor.from_pretrained("openai/clip-vit-large-patch14")
+
+    clip_score = 0.0
+    for i, combo in enumerate(zip(embeds, images)):
+    # for i in range(len(embeds)):
+        cond_embed, image = combo
+        # cond_embed = embeds[i]
+        # image = images[i]
+        # print(cond_embed.shape)
+        image_input = processor(images = image,return_tensors="pt")
+        image_input = image_input.to(gpu)
+        cond_embed = cond_embed.to(gpu)
+        model = model.to(gpu)
+
+        with torch.no_grad():
+            image_features = model.get_image_features(**image_input)
+
+        image_features = image_features / image_features.norm(dim=-1, keepdim=True)
+        cond_embed = cond_embed / cond_embed.norm(dim=-1, keepdim=True)
+
+        print(image_features.shape)
+        print(cond_embed.shape)
+        clip_score = clip_score + torch.matmul(cond_embed, image_features.T).softmax(dim=-1).squeeze()
+
+
+    return clip_score/i
