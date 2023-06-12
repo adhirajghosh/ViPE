@@ -162,3 +162,4 @@ def cond_clip(embeds, images, gpu="cuda"):
 
 
     return clip_score/i
+

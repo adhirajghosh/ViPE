@@ -2,28 +2,63 @@ from pytube import YouTube
 import os
 import fire
 from pathlib import Path
+import numpy as np
 import argparse
-from music_video_generation.whisper import *
+import whisper
+import torch
+import ffmpeg
+import json
+import ast
+from PIL import Image
+import time
+import torchvision.transforms as transforms
+from diffusers import (
+    StableDiffusionImg2ImgPipeline,
+    StableDiffusionPipeline)
+from moviepy.editor import ImageSequenceClip
+from moviepy.editor import concatenate_videoclips
+from moviepy.editor import AudioFileClip
+from music_video_generation.modeling import GPT2Convertor
+from music_video_generation.utils import dotdict, generate_from_sentences, get_close_variations_from_prompt
+from vid import *
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Audio to Lyric Alignment')
-    parser.add_argument('--song_name', help='Name of audio file', type=str, default='placeholder.mp3')
+
+    parser.add_argument('--song_name', help='Name of audio file', type=str, default='Skyfall .mp3')
+    parser.add_argument("--model_name", type=str, default='gpt2-medium', help="which gpt2 version to use?")
+    parser.add_argument("--diffusion_model", type=str, default='dreamlike-art/dreamlike-photoreal-2.0', help="which stable diffusion checkpoint to use?")
+    parser.add_argument("--data_set_dir", type=str, default='/graphics/scratch2/staff/Hassan/genius_crawl/lyrics_to_prompts_v2.0.csv',help='path to the training data')
+    parser.add_argument("--check_path", type=str, default='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/ml_logs_checkpoints/gpt2-medium/', help="path to save the model")
+    parser.add_argument("--img_size", type=int, default=640)
+    parser.add_argument("--warmup_steps", type=int, default=1e3)
+    parser.add_argument("--batch_size", type=int, default=30)
+    parser.add_argument("--context_length", type=int, default=5, help='number of previous lines from lyrics as the context')
+    parser.add_argument("--learning_rate", type=float, default=5e-5)
+    parser.add_argument('--chunk', help='chunk interpolation. Type --chunk or --no-chunk', default=True,action=argparse.BooleanOptionalAction)
+    parser.add_argument("--fps", type=float, default=5)
+    parser.add_argument("--strength", type=float, default=0.3)
+    parser.add_argument("--inf_steps", type=int, default=100)
+    parser.add_argument("--guidance_scale", type=float, default=17.5)
+    parser.add_argument("--eta", type=int, default=0.05)
+    parser.add_argument("--device", default="0 1", nargs='+', type=int, help='GPU as a list')
     parser.add_argument('--url', help='youtube url if song needs to be downloaded', type=str, default='https://www.youtube.com/watch?v=XbGs_qK2PQA&ab_channel=EminemVEVO')
-    parser.add_argument('--outdir', help='Where songs are kept', type=str, default='./mp3/')
+    parser.add_argument('--songdir', help='Where songs are kept', type=str, default='./mp3/')
+    parser.add_argument('--outdir', help='Where results are kept', type=str, default='./results/vids/Skyfall/2/')
     parser.add_argument('--timestamps', help='where timesteps are kept', type=str, default='./timestamps/')
+
+
     args = parser.parse_args()
     return args
 
 def youtube2mp3 (url,outdir):
     yt = YouTube(url)
-
     video = yt.streams.filter(abr='192kbps').last()
 
     out_file = video.download(output_path=outdir)
     base, ext = os.path.splitext(out_file)
-    base = base.split('(')[0]
-    song_name = f'{base}.mp3'
-    new_file = Path(song_name)
+    song_name = f'{yt.title}.mp3'
+    new_file = Path(f'{base}.mp3')
     os.rename(out_file, new_file)
 
     if new_file.exists():
@@ -33,24 +68,324 @@ def youtube2mp3 (url,outdir):
 
     return song_name
 
+def whisper_transcribe(
+        audio_fpath="audio.mp3", device='cuda'):
+    whispers = {
+        'tiny': None,  # 5.83 s
+        'large': None  # 3.73 s
+    }
+    # accelerated runtime required for whisper
+    # to do: pypi package for whisper
+
+    for k in whispers.keys():
+        options = whisper.DecodingOptions(
+            language='en',
+        )
+        # to do: be more proactive about cleaning up these models when we're done with them
+        model = whisper.load_model(k).to(device)
+        # start = time.time()
+        print(f"Transcribing audio with whisper-{k}")
+
+        # to do: calling transcribe like this unnecessarily re-processes audio each time.
+        whispers[k] = model.transcribe(audio_fpath)  # re-processes audio each time, ~10s overhead?
+        # print(f"elapsed: {time.time() - start}")
+    return whispers
+
+
+def create_video_from_images(images, audio_file, output_file, fps):
+    # Create an ImageSequenceClip from the list of images
+    clip = ImageSequenceClip(images, fps=fps)
+
+    # Set the duration of the clip based on the number of images and the desired FPS
+    duration = len(images) / fps
+    clip = clip.set_duration(duration)
+
+    # Load the audio file
+    audio = AudioFileClip(audio_file)
+
+    # Set the audio of the clip
+    clip = clip.set_audio(audio)
+
+    clip.write_videofile(output_file, codec='libx264', audio_codec='aac', temp_audiofile='temp_audio.m4a',
+                         remove_temp=True)
+
+    print(f"Video created: {output_file}")
+
+def img2emb(pipe, image, seed, device):
+    transform = transforms.Compose([
+        transforms.PILToTensor()
+    ])
+    generator = torch.Generator(device=device).manual_seed(seed)
+    image = transform(image).to(device, dtype=torch.float32)
+    init_latents = pipe.vae.encode(image.unsqueeze(0)).latent_dist.sample(generator)
+    return init_latents
+
 def main():
     args = parse_args()
+    assert args.img_size % 8 == 0
     if not os.path.exists(args.outdir):
         os.makedirs(args.outdir)
     if not os.path.exists(args.timestamps):
         os.makedirs(args.timestamps)
 
-    if not os.path.exists(os.path.join(args.outdir,args.song_name)):
-        song_name = youtube2mp3(args.url, args.outdir)
+    if isinstance(args.device, list):
+        device = f"cuda:{args.device[0]}"
+        device1 = f"cuda:{args.device[1]}"
+    else:
+        device = f"cuda:{args.device}"
+
+    #Download the song
+    if not os.path.exists(os.path.join(args.songdir,args.song_name)):
+        song_name = youtube2mp3(args.url, args.songdir)
     else:
         song_name = args.song_name
 
-    song_path = os.path.join(args.outdir, song_name)
-    x = whisper_lyrics(song_path)
+    song_path = os.path.join(args.songdir, song_name)
+
+    # Load the transcription from whisper. We will use the large model
+
+    # whispers = whisper_transcribe(song_path, args.device)
+    # with open('./timestamps/whispers.txt') as f:
+    #     data = f.read()
+    #
+    # # reconstructing the data as a dictionary
+    # whispers = ast.literal_eval(data)
+
     if not os.path.exists(args.timestamps):
         os.makedirs(args.timestamps)
-    with open(os.path.join(args.timestamps,song_name.split('.')[0]+'.txt'), "w") as output:
-        output.write(str(x))
+    # print(os.path.join(args.timestamps,song_name.split('.')[0]+'.txt'))
+    # with open(os.path.join(args.timestamps,song_name.split('.')[0]+'.txt'), "w") as output:
+    #     output.write(str(whispers))
+    song_length = float(ffmpeg.probe(song_path)['format']['duration'])
+    #
+    # model_name = args.model_name
+    # dataset_dir = args.data_set_dir
+    # check_path = args.check_path
+    # # check_path = check_path + '{}_v2.0/'.format(model_name)
+    # context_length = args.context_length
+    #
+    # #Load the hparams dict for the GPT2 model
+    # hparams = dotdict({})
+    # hparams.data_dir = dataset_dir
+    # hparams.model_name = model_name
+    # hparams.context_length = context_length
+    # hparams.batch_size = args.batch_size
+    # hparams.learning_rate = args.learning_rate
+    # if isinstance(args.device, list):
+    #     hparams.device = device1
+    # else:
+    #     hparams.device = device
+    # hparams.warmup_steps = args.warmup_steps
+    #
+    # #Model initialisation and checkpoint loading
+    # model = GPT2Convertor(hparams)
+    # check_point_name = '{}_context_ctx_{}_lr_{}-v2.ckpt'.format(model_name, context_length, args.learning_rate)
+    # checkpoint = torch.load(check_path + check_point_name, map_location=lambda storage, loc: storage)
+    # model.load_state_dict(checkpoint['state_dict'])
+    # print('checkpoint loaded')
+    #
+    # tokenizer = model.tokenizer
+    # model = model.model
+    #
+    # if isinstance(args.device, list):
+    #     model.to(device1)
+    # else:
+    #     model.to(device)
+    #
+    # #Add the prompts to the trancriptions
+    # do_sample = True
+    # for i, lines in enumerate(whispers['large']['segments']):
+    #     lyric = lines['text']
+    #     prompt = generate_from_sentences([lyric + ";visualise"], model, tokenizer, hparams.device, do_sample)[
+    #         0].replace(lyric + ";visualise ", '')
+    #     print(prompt)
+    #     lines['prompt'] = prompt
+    #
+    # #Easier later on
+    # whispers = whispers['large']['segments']
+    # whisper_copy = whispers
+    #
+    # #Add start of the song if the lyrics don't start at the beginning
+    # x = {}
+    # if whispers[0]['start'] != 0.0:
+    #     x['start'] = 0.0
+    #     x['end'] = whispers[0]['start']
+    #     x['text'], x['prompt'] = " "," "
+    #     whispers.insert(0,x)
+    #
+    # #In case bugs exist towards the end of the transcriptions
+    # if whispers[-1]['end'] > song_length:
+    #     whispers[-1]['start'] = whispers[-2]['end']
+    #     whispers[-1]['end'] = song_length
+    #
+    # torch.cuda.empty_cache()
+
+    with open('./timestamps/skyfall2.txt') as f:
+        data = f.read()
+
+        # reconstructing the data as a dictionary
+    whispers = ast.literal_eval(data)
+
+    for i, lines in enumerate(whispers):
+        print(lines["text"], " ", lines["prompt"])
+
+    #Load the stable diffusion img2img and text2img models
+    model_id = args.diffusion_model
+    download = True
+
+    if isinstance(args.device, list):
+        img2img = StableDiffusionImg2ImgPipeline.from_pretrained(
+            model_id).to(device1)
+    else:
+        img2img = StableDiffusionImg2ImgPipeline.from_pretrained(
+            model_id).to(device)
+
+    text2img = StableDiffusionPipeline(
+        vae=img2img.vae,
+        text_encoder=img2img.text_encoder,
+        tokenizer=img2img.tokenizer,
+        unet=img2img.unet,
+        feature_extractor=img2img.feature_extractor,
+        scheduler=img2img.scheduler,
+        safety_checker=img2img.safety_checker).to(device)
+    text2img.enable_attention_slicing()
+    img2img.enable_attention_slicing()
+
+    #Misc
+    regenerate_all_init_images = False
+    prompt_lag = True
+    added_prompt = "high quality, HD, 32K, high focus, dramatic lighting, ultra-realistic, high detailed photography, vivid, vibrant,intricate,trending on artstation"
+    negative_prompt = 'nude, naked, text, digits, worst quality, blurry, morbid, poorly drawn face, bad anatomy,distorted face, disfiguired, bad hands, missing fingers,cropped, deformed body, bloated, ugly, unrealistic'
+
+    frame_index = 0
+    uncond_input = img2img.tokenizer(negative_prompt, padding='max_length', max_length=60, truncation=False, return_tensors="pt")
+    with torch.no_grad():
+        uncond_embed = img2img.text_encoder(uncond_input.input_ids.to(device))[0]
+
+    for i, lines in enumerate(whispers):
+        start = lines['start']
+        end = lines['end']
+        print(lines['text'], start, " ", end)
+
+    for i, lines in enumerate(whispers):
+        start = lines['start']
+        end = lines['end']
+        print(lines['text'], start, " ", end)
+
+        #Number of images
+        num_steps = (int)((end-start)*args.fps)
+        prompt_1 = lines['prompt']
+        prompt_2 = whispers[i + 1]['prompt'] if i<(len(whispers)-1) else ' '
+        prompt1_tok = img2img.tokenizer(prompt_1+added_prompt, padding='max_length', max_length=60, truncation=False,
+                                      return_tensors="pt")
+        with torch.no_grad():
+            prompt1_embed = img2img.text_encoder(prompt1_tok.input_ids.to(device))[0]
+
+        prompt2_tok = img2img.tokenizer(prompt_2+added_prompt, padding='max_length', max_length=60, truncation=False,
+                                      return_tensors="pt")
+        with torch.no_grad():
+            prompt2_embed = img2img.text_encoder(prompt2_tok.input_ids.to(device))[0]
+
+        seed = np.random.randint(100,999)
+        generator = torch.Generator(device=img2img.device).manual_seed(seed)
+        if i ==0 and prompt_1==' ':
+            init_image_1 = Image.new('RGB', (args.img_size, args.img_size))
+            init_a = img2emb(img2img, init_image_1, seed, device)
+
+            init_image_2 = text2img(prompt_2+added_prompt, height = args.img_size, width = args.img_size, negative_prompt = negative_prompt).images[0]
+            init_b = img2emb(img2img, init_image_2, seed, device)
+
+            # init_b = torch.randn(
+            #     (1, img2img.unet.in_channels, args.img_size // 8, args.img_size // 8),
+            #     generator=torch.Generator(device=img2img.device).manual_seed(seed),
+            #     device=img2img.device)
+            for i, t in enumerate(np.linspace(0, 1, num_steps)):
+                print("generating... ", frame_index)
+                if args.chunk:
+                    prompt2_embed_mod = new_embeds(prompt1_embed, prompt2_embed)
+                    cond_embedding = slerp(float(t), prompt1_embed, prompt2_embed_mod)
+                else:
+                    cond_embedding = slerp(float(t), prompt1_embed, prompt2_embed)
+                init = slerp(float(t), init_a.detach(), init_b.detach())
+
+                with autocast("cuda"):
+                    image = diffuse(text2img, cond_embedding, init, uncond_embed, args.inf_steps, args.guidance_scale, args.eta)
+
+                im = Image.fromarray(image)
+                outpath = os.path.join(args.outdir, 'frame%06d.jpg' % frame_index)
+                im.save(outpath)
+                frame_index += 1
+            # init_a = init_b
+            init_image_1 = init_image_2
+
+        elif i > 0 and i < len(whispers)-1:
+            count = 0
+            while count<0.7*num_steps:
+                print("generating... ", frame_index)
+                image = img2img(prompt = prompt_1+added_prompt, image = init_image_1, negative_prompt = negative_prompt,
+                                strength=args.strength, guidance_scale=args.guidance_scale, generator=generator).images[0]
+                outpath = os.path.join(args.outdir, 'frame%06d.jpg' % frame_index)
+                image.save(outpath)
+                frame_index += 1
+                count +=1
+                # init_image_1 = image
+
+            init_image_1 = image
+            init_a = img2emb(img2img, init_image_1, seed, device)
+
+            init_image_2 = text2img(prompt_2 + added_prompt, height=args.img_size, width=args.img_size,
+                                    negative_prompt=negative_prompt).images[0]
+            init_b = img2emb(img2img, init_image_2, seed, device)
+            for i, t in enumerate(np.linspace(0, 1, num_steps-count)):
+                print("generating... ", frame_index)
+                if args.chunk:
+                    prompt2_embed_mod = new_embeds(prompt1_embed, prompt2_embed)
+                    cond_embedding = slerp(float(t), prompt1_embed, prompt2_embed_mod)
+                else:
+                    cond_embedding = slerp(float(t), prompt1_embed, prompt2_embed)
+                init = slerp(float(t), init_a.detach(), init_b.detach())
+
+                with autocast("cuda"):
+                    image = diffuse(text2img, cond_embedding, init, uncond_embed, args.inf_steps, args.guidance_scale, args.eta)
+
+                im = Image.fromarray(image)
+                outpath = os.path.join(args.outdir, 'frame%06d.jpg' % frame_index)
+                im.save(outpath)
+                frame_index += 1
+            init_a = init_b
+            init_image_1 = init_image_2
+
+        elif i == len(whispers)-1:
+            #init_a is already defined no need to call it
+
+            init_image_2 = Image.new('RGB', (args.img_size, args.img_size))
+            init_b = img2emb(img2img, init_image_2, seed, device)
+
+            for i, t in enumerate(np.linspace(0, 1, num_steps)):
+                print("generating... ", frame_index)
+                if args.chunk:
+                    prompt2_embed_mod = new_embeds(prompt1_embed, prompt2_embed)
+                    cond_embedding = slerp(float(t), prompt1_embed, prompt2_embed_mod)
+                else:
+                    cond_embedding = slerp(float(t), prompt1_embed, prompt2_embed)
+
+                init = slerp(float(t), init_a.detach(), init_b.detach())
+
+                with autocast("cuda"):
+                    image = diffuse(text2img, cond_embedding, init, uncond_embed, args.inf_steps,
+                                    args.guidance_scale,args.eta)
+
+                im = Image.fromarray(image)
+                outpath = os.path.join(args.outdir, 'frame%06d.jpg' % frame_index)
+                im.save(outpath)
+                frame_index += 1
+
+                if frame_index == int(song_length)*args.fps:
+                    break
+
+    image_files = [os.path.join(args.outdir, i) for i in os.listdir(args.outdir)]
+    video_path = args.outdir[:-1]+".mp4"
+    create_video_from_images(image_files, song_path, video_path, args.fps)
 
 if __name__ == '__main__':
     fire.Fire(main)

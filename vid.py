@@ -11,6 +11,12 @@ import torch
 from torch import autocast
 from torchvision.utils import make_grid
 from sklearn.metrics.pairwise import cosine_similarity
+# from python_tsp.exact import solve_tsp_dynamic_programming
+import subprocess
+import ffmpeg
+import textwrap
+from PIL import Image, ImageDraw, ImageFont
+from scipy.spatial.distance import pdist, squareform
     
 @torch.no_grad()
 #from stable diffusion main code
@@ -30,9 +36,12 @@ def diffuse(
 
     # uncond_input = pipe.tokenizer([negative_prompt], padding='max_length', max_length=max_length, return_tensors="pt")
     # uncond_embeddings = pipe.text_encoder(uncond_input.input_ids.to(torch_device))[0]
-    print(uncond_embed.shape)
     text_embeddings = torch.cat([uncond_embed, cond_embeddings])
-    print(text_embeddings.shape)
+
+    if isinstance(cond_latents, (torch.Tensor, Image.Image, list)):
+        cond_latents = cond_latents.to(device=torch_device)
+
+
 
     # if we use LMSDiscreteScheduler, let's make sure latents are mulitplied by sigmas
     if isinstance(pipe.scheduler, LMSDiscreteScheduler):
@@ -106,7 +115,7 @@ def slerp(t, v0, v1, DOT_THRESHOLD=0.9995):
 
     return v2
 
-def slerp3(t, v0, v1, t_threshold = 0.75):
+def slerp2(t, v0, v1, t_threshold = 0.75):
     """ helper function to spherically interpolate two arrays v1 v2 """
 
     if not isinstance(v1, np.ndarray):
@@ -128,19 +137,6 @@ def slerp3(t, v0, v1, t_threshold = 0.75):
         v2 = torch.from_numpy(v2).to(input_device)
 
     return v2
-
-
-def cubic_bezier(t, p0, p1, p2, p3):
-    # Calculate coefficients
-    c0 = (1 - t) ** 3
-    c1 = 3 * (1 - t) ** 2 * t
-    c2 = 3 * (1 - t) * t ** 2
-    c3 = t ** 3
-
-    # Perform cubic Bezier interpolation
-    interpolated = c0 * p0 + c1 * p1 + c2 * p2 + c3 * p3
-
-    return interpolated
 
 def create_image(prompts=["man day phoned someone"],  # prompts to dream about
         seeds=100,
@@ -270,7 +266,9 @@ def create_video(
 
     negative_prompts = 'text, blurry, morbid, longbody, lowres, bad anatomy, bad hands, missing fingers, low quality, deformed body, ugly, unrealistic, nude, naked'
 
-
+    uncond_input = pipe.tokenizer(negative_prompts, padding='max_length', max_length=60, truncation=False, return_tensors="pt")
+    with torch.no_grad():
+        uncond_embed = pipe.text_encoder(uncond_input.input_ids.to(torch_device))[0]
     # get the conditional text embeddings based on the prompts
     prompt_embeddings = []
     for prompt in prompts:
@@ -279,7 +277,7 @@ def create_video(
             # keyword_prompt,
             prompt,
             padding='max_length',
-            max_length=pipe.tokenizer.model_max_length,
+            max_length=uncond_embed.shape[1],
             truncation=True,
             return_tensors="pt"
         )
@@ -312,14 +310,14 @@ def create_video(
             print("generating... ", frame_index)
             if chunk_interpolation:
                 prompt_embedding_b_mod = new_embeds(prompt_embedding_a, prompt_embedding_b)
-                cond_embedding = slerp3(float(t), prompt_embedding_a, prompt_embedding_b_mod)
+                cond_embedding = slerp(float(t), prompt_embedding_a, prompt_embedding_b_mod)
             else:
-                cond_embedding = slerp3(float(t), prompt_embedding_a, prompt_embedding_b)
+                cond_embedding = slerp(float(t), prompt_embedding_a, prompt_embedding_b)
 
-            init = slerp3(float(t), init_a, init_b)
+            init = slerp(float(t), init_a, init_b)
 
             with autocast("cuda"):
-                image = diffuse(pipe, cond_embedding, init, negative_prompts, num_inference_steps, guidance_scale, eta)
+                image = diffuse(pipe, cond_embedding, init, uncond_embed, num_inference_steps, guidance_scale, eta)
 
             im = Image.fromarray(image)
             # outpath = os.path.join(outdir, 'frame%06d.jpg' % 0)
@@ -466,11 +464,11 @@ def create_video2(
 
             for j, t in enumerate(np.linspace(0, 1, num_steps)):
                 print("generating... ", frame_index)
-                cond_chunk = slerp3(float(t), chunk_int, chunk)
+                cond_chunk = slerp2(float(t), chunk_int, chunk)
                 cond_embedding = torch.cat((embedc_rem[:index], cond_chunk.unsqueeze(0), embedc_rem[index:]),
                                            dim=0).unsqueeze(0).to(torch_device)
                 # print(cond_embedding.shape)
-                init = slerp3(float(t), init_a, init_b)
+                init = slerp2(float(t), init_a, init_b)
 
                 with autocast("cuda"):
                    image = diffuse(pipe, cond_embedding, init, uncond_embed, num_inference_steps, guidance_scale, eta)
@@ -492,6 +490,3 @@ def create_video2(
 
 
     return frame_index, embeds, ims
-
-if __name__ == '__main__':
-    fire.Fire(create_video)

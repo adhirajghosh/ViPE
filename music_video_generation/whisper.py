@@ -152,19 +152,19 @@ def whisper_segment_transcription(
 
 def whisper_lyrics(audio_fpath="audio.mp3"):
     whispers = whisper_transcribe(audio_fpath)
-    with open('./timestamps/whispers.txt', "w") as output:
-        output.write(str(whispers))
-    tiny2large, large2tiny, whispers_tokens = whisper_align(whispers)
-    with open('./timestamps/t2l.txt', "w") as output:
-        output.write(str(tiny2large))
-    with open('./timestamps/l2t.txt', "w") as output:
-        output.write(str(large2tiny))
-    token_large_index_segmentations = whisper_transmit_meta_across_alignment(
-        whispers,
-        large2tiny,
-        whispers_tokens,
-    )
-    prompt_starts = whisper_segment_transcription(
-        token_large_index_segmentations,
-    )
+    # with open('./timestamps/whispers.txt', "w") as output:
+    #     output.write(str(whispers))
+    # tiny2large, large2tiny, whispers_tokens = whisper_align(whispers)
+    # with open('./timestamps/t2l.txt', "w") as output:
+    #     output.write(str(tiny2large))
+    # with open('./timestamps/l2t.txt', "w") as output:
+    #     output.write(str(large2tiny))
+    # token_large_index_segmentations = whisper_transmit_meta_across_alignment(
+    #     whispers,
+    #     large2tiny,
+    #     whispers_tokens,
+    # )
+    # prompt_starts = whisper_segment_transcription(
+    #     token_large_index_segmentations,
+    # )
     return prompt_starts
