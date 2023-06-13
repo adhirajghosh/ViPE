@@ -86,8 +86,8 @@ for i, j in np.ndindex(cm.shape):
              color="white" if cm_percentage[i, j] > thresh else "black")
 
 # Adding labels and title
-plt.xlabel('Categories', fontsize=14)
-plt.ylabel('Accuracies', fontsize=14)
+plt.xlabel('pred', fontsize=14)
+plt.ylabel('True', fontsize=14)
 
 
 # Adding legend with increased font size

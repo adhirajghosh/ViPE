@@ -90,19 +90,17 @@ valid_dataset = dataset['validation']
 
 
 
-
-
 device='cuda'
 os.environ['CUDA_VISIBLE_DEVICES']='1'
 HAIVMet_Dir='/graphics/scratch2/staff/Hassan/datasets/HAIVMet/flute.zip'
 vis_samples=get_vis_flute_samples(HAIVMet_Dir)
 
 print(' found ', len(vis_samples), ' to be replaced in the dataset')
-do_sample=False
-generate_new_data=False # my model
-use_visual_data=False # my data or haivmet data
+do_sample=False # do sampling while generating prompt with our model?
+generate_new_data=True # my model
+use_visual_data=True # my data or haivmet data
 
-generate_haivment_data=False
+generate_haivment_data=False # calculate which samples are haivment data
 Use_HAIVMet_prompts=False # set to false to use your generated prompt
 
 
@@ -110,8 +108,11 @@ illus=False # does not do much !
 shuffle= False # shuffle the prompt to see what happens!
 
 
-model_name='gpt2'
+model_name='gpt2-medium'
 checkpoint_name = '{}_context_ctx_7_lr_5e-05-v4'.format(model_name)
+
+if Use_HAIVMet_prompts:
+    checkpoint_name='humans'
 
 saving_dir='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/vis_emotion/Vis_FLUTE/vis_{}_shuffle_{}_haivmet_{}/{}/'.format(use_visual_data,shuffle,Use_HAIVMet_prompts,checkpoint_name)
 

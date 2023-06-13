@@ -103,9 +103,6 @@ use_visual_data=True # my data or chatgpt data
 illus=False # does not do much !
 shuffle= False # shuffle the prompt to see what happens!
 
-path_to_jsons = '/home/shahmoha/PycharmProjects/chatgpt/visual_flute/'
-if chat_gpt_random:
-    path_to_jsons='/home/shahmoha/PycharmProjects/chatgpt/visual_flute_random/'
 
 model_name='gpt2-medium'
 device='cuda'
@@ -142,5 +139,6 @@ if use_visual_data and use_chatgpt:
 
     print('generating  images')
     prompt_dict = {i: p for i, p in zip(vis_train['id'], vis_train['hypothesis'])}
-    generate_images(prompt_dict=prompt_dict, saving_path=saving_dir + 'images/', batch_size=7, gpu=0)
+    # prompt_dict={k:prompt_dict[k] for k in list(prompt_dict.keys())[500:1000]}
+    generate_images(prompt_dict=prompt_dict, saving_path=saving_dir + 'images/', batch_size=3, gpu=0)
 

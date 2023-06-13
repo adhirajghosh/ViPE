@@ -21,22 +21,23 @@ random.seed(seed)
 
 
 device='cuda'
-os.environ['CUDA_VISIBLE_DEVICES']='0'
+os.environ['CUDA_VISIBLE_DEVICES']='1'
 HAIVMet_Dir='/graphics/scratch2/staff/Hassan/datasets/HAIVMet/flute.zip'
 vis_samples=get_vis_flute_samples(HAIVMet_Dir)
 
 print(' found ', len(vis_samples), ' to be replaced in the dataset')
 do_sample=False
-use_visual_data=False # my data or haivmet data
+use_visual_data=True # my data or haivmet data
 
-Use_HAIVMet_prompts=False # set to false to use your generated prompt
+Use_HAIVMet_prompts=False # set to false to use our generated prompts
 shuffle=False
 
 
 model_name='gpt2-medium'
 checkpoint_name = '{}_context_ctx_7_lr_5e-05-v4'.format(model_name)
 if Use_HAIVMet_prompts and use_visual_data:
-    checkpoint_name='humans'
+    checkpoint_name='humans' # since thy are humanly annotated
+
 elif not use_visual_data and not Use_HAIVMet_prompts:
     checkpoint_name = 'textual'
 
@@ -62,11 +63,11 @@ if use_visual_data and not Use_HAIVMet_prompts:
 
     print('generating train images')
     prompt_dict={i:p for i,p in zip(vis_train['ids'],vis_train['vis_text'])}
-    generate_images(prompt_dict=prompt_dict,saving_path=saving_dir + 'images/',batch_size=5,gpu=0)
+    generate_images(prompt_dict=prompt_dict,saving_path=saving_dir + 'images/',batch_size=8,gpu=0)
 
     print('generating valid images')
     prompt_dict = {i: p for i, p in zip(vis_valid['ids'], vis_valid['vis_text'])}
-    generate_images(prompt_dict=prompt_dict, saving_path=saving_dir + 'images/', batch_size=5, gpu=0)
+    generate_images(prompt_dict=prompt_dict, saving_path=saving_dir + 'images/', batch_size=8, gpu=0)
 
 
 elif use_visual_data and Use_HAIVMet_prompts:

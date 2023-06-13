@@ -14,7 +14,7 @@ from tqdm import  tqdm
 # Load the dataset
 dataset = load_dataset("ColumbiaNLP/FLUTE")
 
-os.environ['CUDA_VISIBLE_DEVICES']='1'
+os.environ['CUDA_VISIBLE_DEVICES']='2'
 use_chatgpt=True
 chat_gpt_random=False # set false to use sampled obtained from the deterministic  chatgpt (temperature =0)
 
@@ -29,11 +29,10 @@ path_to_jsons = '/home/shahmoha/PycharmProjects/chatgpt/visual_flute/'
 if chat_gpt_random:
     path_to_jsons='/home/shahmoha/PycharmProjects/chatgpt/visual_flute_random/'
 
-model_name='gpt2-medium'
+
 device='cuda'
-checkpoint_name = '{}_context_ctx_3_lr_5e-05-v4'.format(model_name)
-if use_chatgpt:
-    checkpoint_name='chat_gpt'
+
+checkpoint_name='chat_gpt'
 
 
 saving_dir='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/vis_emotion/Vis_FLUTE_chatgpt/vis_{}_shuffle_{}_chatgpt_{}_random_{}/{}/'.format(use_visual_data,shuffle,use_chatgpt,chat_gpt_random,checkpoint_name)
@@ -58,59 +57,7 @@ if  use_chatgpt:
     if shuffle:
        random.shuffle(prompt_list)
 
-
     dataset =update_dataset_chatgpt_haivmet(dataset, prompt_list, vis_samples)
-
-if use_visual_data and not use_chatgpt:
-
-        # use your generated prompts
-        if generate_new_data:
-
-            from datasets import DatasetDict
-            check_point_path = '/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/saved_models_mine/{}.ckpt/'.format(
-                checkpoint_name)
-
-            model = GPT2LMHeadModel.from_pretrained(check_point_path)
-            model.to(device)
-            tokenizer = GPT2Tokenizer.from_pretrained(model_name)
-            tokenizer.pad_token = tokenizer.eos_token
-            batch_size = 256
-
-            # to be replaced by our visual elaboration
-            text_train = {}
-            # ids: id of the sample,
-            # text type: eaiher premise or hypothesis
-            # sample, the samplle to be transformed
-            count = 0
-
-            new_dataset = {k: [] for k in dataset['train'].features.keys()}
-            # Iterate over the dataset examples
-            for batch in tqdm(get_batch(dataset['train'], batch_size)):
-
-                prompt_list = visualizer(batch['hypothesis'], model, tokenizer, device, do_sample,
-                                         epsilon_cutoff=.0005, temperature=1.1)
-
-                batch['hypothesis'] = prompt_list
-                for k in batch.keys():
-                    if not k in text_train:
-                        text_train[k] = []
-
-                    text_train[k].extend(batch[k])
-
-            dataset = DatasetDict({'train': Dataset.from_dict(text_train)})
-
-            save_s_json(saving_dir, 'vis_flute_sample_{}_{}'.format(do_sample, checkpoint_name), text_train)
-            print('saved training data')
-
-        with open(saving_dir + 'vis_flute_sample_{}_{}'.format(do_sample, checkpoint_name)) as file:
-            vis_train = json.load(file)
-
-        if shuffle:
-            random.shuffle(vis_train['vis_text'])
-
-        # for num, (m, ch) in enumerate(zip(vis_train['hypothesis'], prompt_list)):
-        #     print('truth: ', dataset['train']['hypothesis'][num], '  mine: ', m, '  chatgpt: ', ch)
-        dataset = DatasetDict({'train': Dataset.from_dict(vis_train)})
 
 
 import random
@@ -197,8 +144,8 @@ from utils import  DoubleCollator
 # Load the BERT tokenizer
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
-train_dataloader = DataLoader(train_dataset, batch_size=128, shuffle=True,collate_fn=DoubleCollator(tokenizer))
-valid_dataloader = DataLoader(valid_dataset, batch_size=128, shuffle=False, collate_fn=DoubleCollator(tokenizer))
+train_dataloader = DataLoader(train_dataset, batch_size=100, shuffle=True,collate_fn=DoubleCollator(tokenizer))
+valid_dataloader = DataLoader(valid_dataset, batch_size=100, shuffle=False, collate_fn=DoubleCollator(tokenizer))
 
 
 num_labels=2
