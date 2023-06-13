@@ -10,7 +10,7 @@ from transformers import AutoTokenizer, AutoModel
 import torch
 import torch.nn.functional as F
 from tqdm import tqdm
-import evaluate
+# import evaluate
 from torch.nn.functional import cosine_similarity
 import torch
 from torch.utils.data import Dataset, DataLoader

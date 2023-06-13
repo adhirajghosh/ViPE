@@ -45,3 +45,15 @@ def generate_images(prompt_dict, saving_path, batch_size, gpu):
                 img.save("{}{}.png".format(saving_path, img_id))
             batch = []
             ids = []
+
+# def generate_images_retrieval(ds1, ds2, save_path, gpu):
+#
+#
+#     model_id = 'dreamlike-art/dreamlike-photoreal-2.0'
+#     added_prompt = "high quality, HD, 32K, high focus, dramatic lighting, ultra-realistic, high detailed photography, vivid, vibrant,intricate,trending on artstation"
+#     negative_prompt = 'nude, naked, text, digits, worst quality, blurry, morbid, poorly drawn face, bad anatomy,distorted face, disfiguired, bad hands, missing fingers,cropped, deformed body, bloated, ugly, unrealistic'
+#     pipe = StableDiffusionPipeline.from_pretrained(model_id)
+#
+#     for sample in ds1:
+
+
