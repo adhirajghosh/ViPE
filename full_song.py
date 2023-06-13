@@ -26,7 +26,7 @@ def parse_args():
     # parser.add_argument('--log', help='name of log file',
     #                     default='./results/song-2/all-star-fasttext-extend_old.txt')
     parser.add_argument('--extend', help='use prompt extend or not. Type --extend or --no-extend',default=True, action=argparse.BooleanOptionalAction)
-    parser.add_argument('--chunk', help='chunk interpolation. Type --chunk or --no-chunk',default=True, action=argparse.BooleanOptionalAction)
+    parser.add_argument('--chunk', help='chunk interpolation. Type --chunk or --no-chunk',default=False, action=argparse.BooleanOptionalAction)
     parser.add_argument('--extend_model', help='path to model extender',
                         default='./prompt-extend')
 
@@ -62,7 +62,7 @@ def main():
                 full_song[i][j] = new_lyric
 
         print(full_song[i])
-        new_frame_index, embeds, ims = create_video2(prompts = full_song[i],
+        new_frame_index, embeds, ims = create_video(prompts = full_song[i],
                      seeds = np.random.randint(100,999, size=(len(full_song[i]))),
                      gpu = args.gpu,
                      rootdir = output_dir,
