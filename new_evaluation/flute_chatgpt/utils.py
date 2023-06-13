@@ -165,7 +165,7 @@ def get_vis_flute_samples(zip_file_path):
     with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
         # Get a list of all the file and directory names in the zip file
         file_names = zip_ref.namelist()
-        file_names =[file.split('/')[2] for file in file_names if len(file.split('/')) == 4 and file.split('/')[-1] != '']
+        file_names =[file.split('/')[2] for file in file_names if len(file.split('/')) == 4 and file.split('/')[-1] != '' and file.split('/')[-1] !='dalle_prompt.txt' and file.split('/')[-1] !='gpt_prompt.txt']
         # Extract the directory names
         #subdirectories = [name for name in file_list if zip_ref.getinfo(name).is_dir()]
     return list(set(file_names))
@@ -173,6 +173,8 @@ def get_vis_flute_samples(zip_file_path):
 def get_haivment_prompts(zip_file_path,vis_samples,dataset ):
     # to be replaced by our visual elaboration
     vis_data = {'ids': [], 'text_type': [], 'vis_text': [], 'text': []}
+    premise_count=0
+    hypothesis_count=0
 
     # Open the zip file
     with zipfile.ZipFile(zip_file_path, 'r') as zip_file:
@@ -182,7 +184,7 @@ def get_haivment_prompts(zip_file_path,vis_samples,dataset ):
         # Create an empty dictionary to store the folder names and first file names
         folder_dict = {}
 
-        file_names=[file for file in file_names if len(file.split('/')) ==4 and file.split('/')[-1] !='']
+        file_names=[file for file in file_names if len(file.split('/')) ==4 and file.split('/')[-1] !='' and file.split('/')[-1] !='dalle_prompt.txt' and file.split('/')[-1] !='gpt_prompt.txt']
         # Iterate over the file names
         for file_name in file_names:
 
@@ -203,19 +205,23 @@ def get_haivment_prompts(zip_file_path,vis_samples,dataset ):
         premise=example['premise']
         hypothesis=example['hypothesis']
 
-        if premise in vis_samples:
+        if premise in vis_samples and not hypothesis in vis_samples:
             vis_data['vis_text'].append(folder_dict[premise])
             vis_data['ids'].append(example['id'])
             vis_data['text_type'].append('premise')
             vis_data['text'].append(premise)
+            premise_count +=1
 
         if hypothesis in vis_samples:
             vis_data['vis_text'].append(folder_dict[hypothesis])
             vis_data['ids'].append(example['id'])
             vis_data['text_type'].append('hypothesis')
             vis_data['text'].append(hypothesis)
+            hypothesis_count +=1
 
+    print('found {} hypothesis and {} premise to match the haivmet data'.format(hypothesis_count, premise_count))
     return vis_data
+
 
 def save_s_json(path,name, data):
     with open(path + name,'w') as file:

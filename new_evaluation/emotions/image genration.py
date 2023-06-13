@@ -39,7 +39,6 @@ os.makedirs(saving_dir + 'images/',exist_ok=True)
 #checkpoint_name = 'gpt2-large_context_ctx_1_lr_5e-05-v3.ckpt'
 
 
-
 from img_tools import generate_images
 
 if use_visual_data:
