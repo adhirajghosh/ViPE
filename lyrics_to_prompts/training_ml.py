@@ -117,7 +117,7 @@ def main():
         if load_checkpoint==0:
             check_name=check_path+model_name + '.ckpt'
         else:
-            check_name = check_path + model_name +'-v{}.ckpt'.format(load_checkpoint)
+            check_name = check_path + model_name.replace('2e','5e') +'-v{}.ckpt'.format(load_checkpoint)
 
         checkpoint = torch.load(check_name, map_location=lambda storage, loc: storage)
         model.load_state_dict(checkpoint['state_dict'])
