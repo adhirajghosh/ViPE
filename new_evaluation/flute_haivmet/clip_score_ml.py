@@ -167,3 +167,6 @@ def main():
     print("mean:", np.mean(all_similarities))
     print("std:", np.std(all_similarities))
 
+
+if __name__ == "__main__":
+    main()
