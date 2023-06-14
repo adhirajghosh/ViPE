@@ -138,7 +138,7 @@ def main():
 
     # Create the dataset and data loader
     dataset = ImageCaptionDataset(saving_dir + 'images', captions_dict)
-    dataloader = DataLoader(dataset, batch_size=32, shuffle=False,collate_fn=DataCollator(processor))
+    dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False,collate_fn=DataCollator(processor))
 
     # Load the CLIP model and processor
     model = CLIPModel.from_pretrained(clip_model)
