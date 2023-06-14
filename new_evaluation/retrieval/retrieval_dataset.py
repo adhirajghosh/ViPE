@@ -60,10 +60,10 @@ def main():
     print("The dataset being used is ", args.dataset)
     folder_dict = zip_process(os.path.join(args.datadir, args.dataset+'.zip'))
 
-    # model = GPT2LMHeadModel.from_pretrained('/mnt/lustre/lensch/lhr027/checkpoints/songanimator/gpt2-medium/gpt2-medium_context_ctx_7_lr_5e-05-v4.ckpt')
-    # model.to(device)
-    # tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-    # tokenizer.pad_token = tokenizer.eos_token
+    model = GPT2LMHeadModel.from_pretrained('/mnt/lustre/lensch/lhr027/checkpoints/songanimator/gpt2-medium/gpt2-medium_context_ctx_7_lr_5e-05-v4.ckpt')
+    model.to(device)
+    tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+    tokenizer.pad_token = tokenizer.eos_token
 
     model_id = 'dreamlike-art/dreamlike-photoreal-2.0'
     pipe = StableDiffusionPipeline.from_pretrained(model_id).to(device)
@@ -94,25 +94,25 @@ def main():
         os.makedirs(daiv_path)
     generate_images(pipe, prompt_dict_daiv, ds_id, daiv_path, batch_size, args.img_size, device)
 
-    # ds_ours = []
-    # for i, metaphor in enumerate(folder_dict.keys()):
-    #     y = {}
-    #     y['text'] = metaphor
-    #     y['prompt'] = visualizer([metaphor], model, tokenizer, device, args.sample,
-    #                              epsilon_cutoff=.0005, temperature=1.1)[0]
-    #     ds_ours.append(y)
-    #
-    # prompt_dict_ours = {}
-    # for i in ds_ours:
-    #     prompt_dict_ours[metaphor_id[i['text']]] = i['prompt']
-    #
-    # with open(os.path.join(args.savedir,'prompt_dict_vipe.pickle'), 'wb') as handle:
-    #     pickle.dump(prompt_dict_ours, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    #
-    # ours_path = os.path.join(args.savedir, 'vipe')
-    # if not os.path.exists(ours_path):
-    #     os.makedirs(ours_path)
-    # generate_images(pipe, prompt_dict_ours, ds_id, ours_path, batch_size, args.img_size, device)
+    ds_ours = []
+    for i, metaphor in enumerate(folder_dict.keys()):
+        y = {}
+        y['text'] = metaphor
+        y['prompt'] = visualizer([metaphor], model, tokenizer, device, args.sample,
+                                 epsilon_cutoff=.0005, temperature=1.1)[0]
+        ds_ours.append(y)
+
+    prompt_dict_ours = {}
+    for i in ds_ours:
+        prompt_dict_ours[metaphor_id[i['text']]] = i['prompt']
+
+    with open(os.path.join(args.savedir,'prompt_dict_vipe.pickle'), 'wb') as handle:
+        pickle.dump(prompt_dict_ours, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    ours_path = os.path.join(args.savedir, 'vipe')
+    if not os.path.exists(ours_path):
+        os.makedirs(ours_path)
+    generate_images(pipe, prompt_dict_ours, ds_id, ours_path, batch_size, args.img_size, device)
 
 if __name__ == '__main__':
     main()
