@@ -45,9 +45,11 @@ def generate_images(pipe, prompt_dict, ds_id, saving_path, batch_size, size, gpu
                 if len(batch) < batch_size and (num + 1) < len(prompt_dict):
                     continue
                 print(prompt)
-                images = pipe(batch, generator=generator, negative_prompt=[negative_prompt]*batch_size, height = size, width = size).images
-                for img_id, img in zip(ids, images):
-                    img.save("{}/{}_{}_{}.png".format(saving_path, str(ds_id), p_id, str(i+1)))
+
+                #the last batch might not have the same size as batch_size so i used len(batch) instead of len(batch_size)
+                images = pipe(batch, generator=generator, negative_prompt=[negative_prompt]*len(batch), height = size, width = size).images
+                for num, (img_id, img) in enumerate(zip(ids, images)):
+                    img.save("{}/{}_{}_{}.png".format(saving_path, str(ds_id), ids[num], str(i+1)))
                 batch = []
                 ids = []
 
