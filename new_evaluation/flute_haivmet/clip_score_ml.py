@@ -12,7 +12,7 @@ from torchmetrics.functional.multimodal import clip_score
 from utils import  save_s_json
 import numpy as np
 # Check if CUDA is available
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 import argparse
 
 def parse_args():
@@ -167,3 +167,6 @@ def main():
     print("mean:", np.mean(all_similarities))
     print("std:", np.std(all_similarities))
 
+
+if __name__ == "__main__":
+    main()
