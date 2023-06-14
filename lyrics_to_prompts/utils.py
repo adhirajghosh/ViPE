@@ -65,7 +65,7 @@ def generate_from_loader(valid_gen, model, tokenizer,device,do_sample):
     return id2cap,ground_truth
 
 
-def generate_from_sentences(text, model, tokenizer,device,do_sample,top_k, num_beams):
+def generate_from_sentences(text, model, tokenizer,device,do_sample,top_k, num_beams,epsilon_cutoff=.0005, temperature=1.1):
     text=[tokenizer.eos_token +  i  + tokenizer.eos_token for  i in text]
     #start=[ tokenizer.eos_token for _ in text]
     batch=tokenizer(text, padding=True, return_tensors="pt")
@@ -90,10 +90,10 @@ def generate_from_sentences(text, model, tokenizer,device,do_sample,top_k, num_b
         generated_ids = model.generate(input_ids=input_ids, attention_mask=attention_mask, max_length=max_length,
                                        do_sample=False, num_beams=num_beams)
     elif top_k >0:
-        generated_ids = model.generate(input_ids=input_ids,attention_mask=attention_mask, max_length=max_length, do_sample=do_sample,top_k=top_k)
+        generated_ids = model.generate(input_ids=input_ids,attention_mask=attention_mask, max_length=max_length, do_sample=do_sample,top_k=top_k,epsilon_cutoff=epsilon_cutoff, temperature=temperature)
     else:
         generated_ids = model.generate(input_ids=input_ids, attention_mask=attention_mask, max_length=max_length,
-                                       do_sample=do_sample)
+                                       do_sample=do_sample,epsilon_cutoff=epsilon_cutoff, temperature=temperature)
 
     #generated_ids = model.generate(input_ids=input_ids, attention_mask=attention_mask,
                                   # token_type_ids=token_type_ids, max_length=max_length)

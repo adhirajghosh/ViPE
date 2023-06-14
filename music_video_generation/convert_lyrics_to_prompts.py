@@ -34,7 +34,7 @@ def parse_args():
         "--warmup_steps", type=int, default=1e3
     )
     parser.add_argument(
-        "--context_length", type=int, default=5, help='number of previous lines from lyrics as the context'
+        "--context_length", type=int, default=7, help='number of previous lines from lyrics as the context'
     )
 
     parser.add_argument(
@@ -53,7 +53,7 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--lyrics", type=str, default='sample_song', help='path to the lyric file'
+        "--lyrics", type=str, default='thunder', help='path to the lyric file'
     )
 
     args = parser.parse_args()
@@ -110,16 +110,17 @@ def main():
     lyrics = [lyrics[i:i + hparams.context_length+1] for i in range(len(lyrics) - hparams.context_length )]
     for c, text in enumerate(lyrics):
         text='; '.join([t for t in text if t != 'null'])
-        lyrics[c] = text
+        lyrics[c] = 'visualize ;' + text
 
     lyrics.pop(0)
-    prompts=generate_from_sentences(lyrics, model, tokenizer, hparams.device,do_sample)
+    prompts=generate_from_sentences(lyrics, model, tokenizer, hparams.device,False,  top_k=100, epsilon_cutoff=.00005, temperature=1)
 
     with open(args.lyrics+'_prompts', 'w') as file:
 
         for line, prompt in zip(lyrics, prompts):
             #print(prompt.split(line)[1])
-            file.write(prompt.split(line)[1] + '\n')
+            # file.write(line + ' : '+ prompt.split(line)[1] + '\n')
+            file.write(line.split(';')[-1] + ' : ' + prompt.split(line)[1] + '\n')
 
     #name2cap = generate_from_loader(dataloader, model, tokenizer,hparams.device)
 
