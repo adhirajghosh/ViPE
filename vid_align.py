@@ -159,87 +159,87 @@ def main():
 
     # Load the transcription from whisper. We will use the large model
 
-    whispers = whisper_transcribe(song_path, args.device)
-    with open('./timestamps/whispers.txt') as f:
-        data = f.read()
-
-    # reconstructing the data as a dictionary
-    whispers = ast.literal_eval(data)
-
-    if not os.path.exists(args.timestamps):
-        os.makedirs(args.timestamps)
+    # whispers = whisper_transcribe(song_path, args.device)
+    # with open('./timestamps/whispers.txt') as f:
+    #     data = f.read()
+    #
+    # # reconstructing the data as a dictionary
+    # whispers = ast.literal_eval(data)
+    #
+    # if not os.path.exists(args.timestamps):
+    #     os.makedirs(args.timestamps)
     # print(os.path.join(args.timestamps,song_name.split('.')[0]+'.txt'))
     # with open(os.path.join(args.timestamps,song_name.split('.')[0]+'.txt'), "w") as output:
     #     output.write(str(whispers))
     song_length = float(ffmpeg.probe(song_path)['format']['duration'])
 
-    model_name = args.model_name
-    dataset_dir = args.data_set_dir
-    check_path = args.check_path
-    # check_path = check_path + '{}_v2.0/'.format(model_name)
-    context_length = args.context_length
-
-    #Load the hparams dict for the GPT2 model
-    hparams = dotdict({})
-    hparams.data_dir = dataset_dir
-    hparams.model_name = model_name
-    hparams.context_length = context_length
-    hparams.batch_size = args.batch_size
-    hparams.learning_rate = args.learning_rate
-    if isinstance(args.device, list):
-        hparams.device = device1
-    else:
-        hparams.device = device
-    hparams.warmup_steps = args.warmup_steps
-
-    #Model initialisation and checkpoint loading
-    model = GPT2Convertor(hparams)
-    check_point_name = '{}_context_ctx_{}_lr_{}-v2.ckpt'.format(model_name, context_length, args.learning_rate)
-    checkpoint = torch.load(check_path + check_point_name, map_location=lambda storage, loc: storage)
-    model.load_state_dict(checkpoint['state_dict'])
-    print('checkpoint loaded')
-
-    tokenizer = model.tokenizer
-    model = model.model
-
-    if isinstance(args.device, list):
-        model.to(device1)
-    else:
-        model.to(device)
-
-    #Add the prompts to the trancriptions
-    do_sample = True
-    for i, lines in enumerate(whispers['large']['segments']):
-        lyric = lines['text']
-        prompt = generate_from_sentences([lyric + ";visualise"], model, tokenizer, hparams.device, do_sample)[
-            0].replace(lyric + ";visualise ", '')
-        print(prompt)
-        lines['prompt'] = prompt
-
-    #Easier later on
-    whispers = whispers['large']['segments']
-    whisper_copy = whispers
-
-    #Add start of the song if the lyrics don't start at the beginning
-    x = {}
-    if whispers[0]['start'] != 0.0:
-        x['start'] = 0.0
-        x['end'] = whispers[0]['start']
-        x['text'], x['prompt'] = " "," "
-        whispers.insert(0,x)
-
-    #In case bugs exist towards the end of the transcriptions
-    if whispers[-1]['end'] > song_length:
-        whispers[-1]['start'] = whispers[-2]['end']
-        whispers[-1]['end'] = song_length
-
-    torch.cuda.empty_cache()
-
-    # with open('./timestamps/skyfall2.txt') as f:
-    #     data = f.read()
+    # model_name = args.model_name
+    # dataset_dir = args.data_set_dir
+    # check_path = args.check_path
+    # # check_path = check_path + '{}_v2.0/'.format(model_name)
+    # context_length = args.context_length
     #
-    #     # reconstructing the data as a dictionary
-    # whispers = ast.literal_eval(data)
+    # #Load the hparams dict for the GPT2 model
+    # hparams = dotdict({})
+    # hparams.data_dir = dataset_dir
+    # hparams.model_name = model_name
+    # hparams.context_length = context_length
+    # hparams.batch_size = args.batch_size
+    # hparams.learning_rate = args.learning_rate
+    # if isinstance(args.device, list):
+    #     hparams.device = device1
+    # else:
+    #     hparams.device = device
+    # hparams.warmup_steps = args.warmup_steps
+    #
+    # #Model initialisation and checkpoint loading
+    # model = GPT2Convertor(hparams)
+    # check_point_name = '{}_context_ctx_{}_lr_{}-v2.ckpt'.format(model_name, context_length, args.learning_rate)
+    # checkpoint = torch.load(check_path + check_point_name, map_location=lambda storage, loc: storage)
+    # model.load_state_dict(checkpoint['state_dict'])
+    # print('checkpoint loaded')
+    #
+    # tokenizer = model.tokenizer
+    # model = model.model
+    #
+    # if isinstance(args.device, list):
+    #     model.to(device1)
+    # else:
+    #     model.to(device)
+    #
+    # #Add the prompts to the trancriptions
+    # do_sample = True
+    # for i, lines in enumerate(whispers['large']['segments']):
+    #     lyric = lines['text']
+    #     prompt = generate_from_sentences([lyric + ";visualise"], model, tokenizer, hparams.device, do_sample)[
+    #         0].replace(lyric + ";visualise ", '')
+    #     print(prompt)
+    #     lines['prompt'] = prompt
+    #
+    # #Easier later on
+    # whispers = whispers['large']['segments']
+    # whisper_copy = whispers
+    #
+    # #Add start of the song if the lyrics don't start at the beginning
+    # x = {}
+    # if whispers[0]['start'] != 0.0:
+    #     x['start'] = 0.0
+    #     x['end'] = whispers[0]['start']
+    #     x['text'], x['prompt'] = " "," "
+    #     whispers.insert(0,x)
+    #
+    # #In case bugs exist towards the end of the transcriptions
+    # if whispers[-1]['end'] > song_length:
+    #     whispers[-1]['start'] = whispers[-2]['end']
+    #     whispers[-1]['end'] = song_length
+    #
+    # torch.cuda.empty_cache()
+
+    with open('./timestamps/skyfall2.txt') as f:
+        data = f.read()
+
+        # reconstructing the data as a dictionary
+    whispers = ast.literal_eval(data)
 
     for i, lines in enumerate(whispers):
         print(lines["text"], " ", lines["prompt"])

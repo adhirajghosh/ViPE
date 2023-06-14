@@ -1,12 +1,8 @@
 import os
-
-
 from diffusers import StableDiffusionPipeline
 import torch
-
 from diffusers import StableDiffusionPipeline
 from transformers import pipeline
-
 import random
 import numpy as np
 
@@ -46,14 +42,27 @@ def generate_images(prompt_dict, saving_path, batch_size, gpu):
             batch = []
             ids = []
 
-# def generate_images_retrieval(ds1, ds2, save_path, gpu):
-#
-#
-#     model_id = 'dreamlike-art/dreamlike-photoreal-2.0'
-#     added_prompt = "high quality, HD, 32K, high focus, dramatic lighting, ultra-realistic, high detailed photography, vivid, vibrant,intricate,trending on artstation"
-#     negative_prompt = 'nude, naked, text, digits, worst quality, blurry, morbid, poorly drawn face, bad anatomy,distorted face, disfiguired, bad hands, missing fingers,cropped, deformed body, bloated, ugly, unrealistic'
-#     pipe = StableDiffusionPipeline.from_pretrained(model_id)
-#
-#     for sample in ds1:
+def generate_images_retrieval(ds, save_path, gpu):
+
+    model_id = 'dreamlike-art/dreamlike-photoreal-2.0'
+    added_prompt = "high quality, HD, 32K, high focus, dramatic lighting, ultra-realistic, high detailed photography, vivid, vibrant,intricate,trending on artstation"
+    negative_prompt = 'nude, naked, text, digits, worst quality, blurry, morbid, poorly drawn face, bad anatomy,distorted face, disfiguired, bad hands, missing fingers,cropped, deformed body, bloated, ugly, unrealistic'
+    pipe = StableDiffusionPipeline.from_pretrained(model_id).to(gpu)
+
+    for sample in ds:
+        prompt = sample['prompt']
+        print(prompt)
+        for i in range(5):
+            print("generating... ", i)
+            image = pipe(prompt=prompt + added_prompt, negative_prompt=negative_prompt).images[0]
+            outdir = os.path.join(save_path, sample['text'])
+            if not os.path.exists(outdir):
+                os.makedirs(outdir)
+
+            if prompt[-1] == '.':
+                outpath = os.path.join(outdir, '{}_{}.jpg'.format(prompt[:-1],str(i+1)))
+            else:
+                outpath = os.path.join(outdir, '{}_{}.jpg'.format(prompt, str(i + 1)))
+            image.save(outpath)
 
 
