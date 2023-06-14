@@ -19,19 +19,19 @@ dataset_dict = {
     'tsvetkov':6
 }
 
-with open('/graphics/scratch2/students/ghoshadh/SongAnimator/metaphor_id.pickle', 'rb') as handle:
+with open('/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/temp/metaphor_id.pickle', 'rb') as handle:
     metaphor_id = pickle.load(handle)
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Audio to Lyric Alignment')
 
     parser.add_argument('--datadir', help='where are the datasets stored?', type=str, default='/graphics/scratch2/staff/Hassan/datasets/HAIVMet/')
-    parser.add_argument('--dataset', help='Name of dataset', type=str, default='ad_slogans')
+    parser.add_argument('--dataset', help='Name of dataset', type=str, default='tsvetkov')
     parser.add_argument('--model', help='which model to use', type=str, default='vipe')
     parser.add_argument('--checkpoint', help='path to the GPT to use', type=str, default='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/saved_models_mine/gpt2-medium_context_ctx_7_lr_5e-05-v4.ckpt/')
     parser.add_argument('--savedir', help='where to save the dataset', type=str, default='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/temp/')
     parser.add_argument("--img_size", type=int, default=400)
-    parser.add_argument("--batch_size", type=int, default=10)
+    parser.add_argument("--batch_size", type=int, default=12)
     parser.add_argument('--sample', help='Sampling or no', type=bool, default=False)
 
     args = parser.parse_args()
@@ -67,8 +67,6 @@ def main():
     tokenizer.pad_token = tokenizer.eos_token
 
     model_id = 'dreamlike-art/dreamlike-photoreal-2.0'
-    # I used this model for other experiments so lets stick with this
-    #model_id = "stabilityai/stable-diffusion-2"
     pipe = StableDiffusionPipeline.from_pretrained(model_id).to(device)
     ds_id = dataset_dict[args.dataset]
     batch_size = args.batch_size

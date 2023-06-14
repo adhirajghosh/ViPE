@@ -10,8 +10,16 @@ def zip_process(file):
         #     print(file_names)
         # Create an empty dictionary to store the folder names and first file names
         folder_dict = {}
+        max_index=4
+        folder_index=2
+        prompt_index=3
 
-        file_names = [file for file in file_names if len(file.split('/')) == 4 and file.split('/')[-1] != ''
+        if file.split('/')[-1]=='tsvetkov.zip' or file.split('/')[-1]=='bizzoni.zip':
+            max_index = 3
+            folder_index = 1
+            prompt_index = 2
+
+        file_names = [file for file in file_names if len(file.split('/')) == max_index and file.split('/')[-1] != ''
                       and file.split('/')[-1] != 'gpt_prompt.txt' and file.split('/')[-1] != 'dalle_prompt.txt'
                       and file.split('/')[0] != '__MACOSX']
 
@@ -19,8 +27,8 @@ def zip_process(file):
         for file_name in sorted(file_names):
 
             # Extract the folder name and the first file name
-            folder_name = file_name.split('/')[2]
-            first_file_name = file_name.split('/')[3]
+            folder_name = file_name.split('/')[folder_index]
+            first_file_name = file_name.split('/')[prompt_index]
             # Check if the folder name is already in the dictionary
             if folder_name not in folder_dict:
                 label = 'An ' + first_file_name.split('An')[-1][1:-4]
