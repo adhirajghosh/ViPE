@@ -62,7 +62,7 @@ def main():
 
     model = GPT2LMHeadModel.from_pretrained(args.checkpoint)
     model.to(device)
-    tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+    tokenizer = GPT2Tokenizer.from_pretrained('gpt2-medium')
     tokenizer.pad_token = tokenizer.eos_token
 
     model_id = 'dreamlike-art/dreamlike-photoreal-2.0'
