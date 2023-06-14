@@ -28,6 +28,8 @@ def diffuse(
         num_inference_steps,
         guidance_scale,
         eta,
+        timestep=1,
+        flag=1,
 ):
     torch_device = cond_latents.get_device()
 
@@ -40,8 +42,6 @@ def diffuse(
 
     if isinstance(cond_latents, (torch.Tensor, Image.Image, list)):
         cond_latents = cond_latents.to(device=torch_device)
-
-
 
     # if we use LMSDiscreteScheduler, let's make sure latents are mulitplied by sigmas
     if isinstance(pipe.scheduler, LMSDiscreteScheduler):
@@ -82,10 +82,21 @@ def diffuse(
     # scale and decode the image latents with vae
     cond_latents = 1 / 0.18215 * cond_latents
     image = pipe.vae.decode(cond_latents)
+
     # generate output numpy image as uint8
     image = (image['sample']/ 2 + 0.5).clamp(0, 1)
-    image = image.cpu().permute(0, 2, 3, 1).numpy()
-    image = (image[0] * 255).astype(np.uint8)
+    image = image.cpu().permute(0, 2, 3, 1).float().numpy()
+    # image = image.cpu().numpy()
+    #
+    image = (image[0] * 255).round().astype('uint8')
+
+    # if flag == 0:
+    #     image = (image[0] * 255 * timestep).astype(np.uint8)
+    # elif flag == 1:
+    #     image = (image[0] * 255).astype(np.uint8)
+    # elif flag == -1:
+    #     image = (image[0] * 255 * (1-timestep)).astype(np.uint8)
+
 
     return image
 
@@ -115,7 +126,7 @@ def slerp(t, v0, v1, DOT_THRESHOLD=0.9995):
 
     return v2
 
-def slerp2(t, v0, v1, t_threshold = 0.75):
+def lerp(t, v0, v1, t_threshold = 0.7):
     """ helper function to spherically interpolate two arrays v1 v2 """
 
     if not isinstance(v1, np.ndarray):
@@ -317,7 +328,7 @@ def create_video(
             init = slerp(float(t), init_a, init_b)
 
             with autocast("cuda"):
-                image = diffuse(pipe, cond_embedding, init, uncond_embed, num_inference_steps, guidance_scale, eta)
+                image = diffuse(pipe, cond_embedding, init, uncond_embed, num_inference_steps, guidance_scale, eta, 1)
 
             im = Image.fromarray(image)
             # outpath = os.path.join(outdir, 'frame%06d.jpg' % 0)
