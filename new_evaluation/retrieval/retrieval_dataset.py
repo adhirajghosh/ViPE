@@ -60,7 +60,7 @@ def main():
     print("The dataset being used is ", args.dataset)
     folder_dict = zip_process(os.path.join(args.datadir, args.dataset+'.zip'))
 
-    model = GPT2LMHeadModel.from_pretrained('/mnt/lustre/lensch/lhr027/checkpoints/songanimator/gpt2-medium/gpt2-medium_context_ctx_7_lr_5e-05-v4.ckpt')
+    model = GPT2LMHeadModel.from_pretrained(args.checkpoint)
     model.to(device)
     tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
     tokenizer.pad_token = tokenizer.eos_token
