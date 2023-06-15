@@ -1,6 +1,6 @@
 import argparse
 import os
-import ruamel_yaml as yaml
+import yaml
 import numpy as np
 import random
 import time
@@ -17,8 +17,7 @@ from torch.utils.data import DataLoader
 
 from models.blip_retrieval import blip_retrieval
 import utils
-from utils import cosine_lr_schedule
-from data import create_dataset, create_sampler, create_loader
+from dataset import create_dataset, create_loader
 
 import torch
 from torchvision import transforms
@@ -26,95 +25,6 @@ from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import json
 import os
-
-# Define your dataset class
-class CustomDataset(Dataset):
-    def __init__(self, image_dir, transform=None):
-        self.image_dir = image_dir
-        self.transform = transform
-
-        # Load captions from the text file
-        self.captions = os.listdir(image_dir)
-
-    def __len__(self):
-        return len(self.captions)
-
-    def __getitem__(self, index):
-        caption = self.captions[index]
-        image_label = caption['label']
-        image_path = os.path.join(self.image_dir, f"{image_label}.jpg")
-
-        # Load the image
-        image = Image.open(image_path).convert("RGB")
-
-        # Apply transformations if provided
-        if self.transform is not None:
-            image = self.transform(image)
-
-        return image, caption
-
-# Set the paths to your text file and image directory
-text_file = 'text.txt'
-image_dir = 'images/'
-
-# Set the desired image size and preprocessing transformations
-image_size = 768 # Adjust this according to your model's input size
-transform = transforms.Compose([
-    transforms.Resize((image_size, image_size)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-])
-
-# Create train, val, and test datasets
-train_dataset = CustomDataset(text_file, image_dir, transform=transform)
-val_dataset = CustomDataset(text_file, image_dir, transform=transform)
-test_dataset = CustomDataset(text_file, image_dir, transform=transform)
-
-# Set the batch size for dataloaders
-batch_size = 32
-
-# Create train, val, and test dataloaders
-train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-val_dataloader = DataLoader(val_dataset, batch_size=batch_size)
-test_dataloader = DataLoader(test_dataset, batch_size=batch_size)
-
-
-def train(model, data_loader, optimizer, epoch, device, config):
-    # train
-    model.train()
-
-    metric_logger = utils.MetricLogger(delimiter="  ")
-    metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
-    metric_logger.add_meter('loss_itm', utils.SmoothedValue(window_size=1, fmt='{value:.4f}'))
-    metric_logger.add_meter('loss_ita', utils.SmoothedValue(window_size=1, fmt='{value:.4f}'))
-    header = 'Train Epoch: [{}]'.format(epoch)
-    print_freq = 50
-
-    for i, (image, caption, idx) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
-        image = image.to(device, non_blocking=True)
-        idx = idx.to(device, non_blocking=True)
-
-        if epoch > 0:
-            alpha = config['alpha']
-        else:
-            alpha = config['alpha'] * min(1, i / len(data_loader))
-
-        loss_ita, loss_itm = model(image, caption, alpha=alpha, idx=idx)
-        loss = loss_ita + loss_itm
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        metric_logger.update(loss_itm=loss_itm.item())
-        metric_logger.update(loss_ita=loss_ita.item())
-        metric_logger.update(lr=optimizer.param_groups[0]["lr"])
-
-    # gather the stats from all processes
-    metric_logger.synchronize_between_processes()
-    print("Averaged stats:", metric_logger.global_avg())
-    return {k: "{:.3f}".format(meter.global_avg) for k, meter in metric_logger.meters.items()}
-
 
 @torch.no_grad()
 def evaluation(model, data_loader, device, config):
@@ -150,13 +60,13 @@ def evaluation(model, data_loader, device, config):
 
     image_feats = []
     image_embeds = []
-    for image, img_id in data_loader:
+    for image, img_id, _ in data_loader:
         image = image.to(device)
         image_feat = model.visual_encoder(image)
         image_embed = model.vision_proj(image_feat[:, 0, :])
         image_embed = F.normalize(image_embed, dim=-1)
 
-        image_feats.append(image_feat.cpu())
+        image_feats.append(image_feat)
         image_embeds.append(image_embed)
 
     image_feats = torch.cat(image_feats, dim=0)
@@ -185,6 +95,7 @@ def evaluation(model, data_loader, device, config):
         score = model.itm_head(output.last_hidden_state[:, 0, :])[:, 1]
         score_matrix_i2t[start + i, topk_idx] = score + topk_sim
 
+
     sims_matrix = sims_matrix.t()
     score_matrix_t2i = torch.full((len(texts), len(data_loader.dataset.image)), -100.0).to(device)
 
@@ -209,6 +120,7 @@ def evaluation(model, data_loader, device, config):
         dist.barrier()
         torch.distributed.all_reduce(score_matrix_i2t, op=torch.distributed.ReduceOp.SUM)
         torch.distributed.all_reduce(score_matrix_t2i, op=torch.distributed.ReduceOp.SUM)
+
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
@@ -266,7 +178,6 @@ def itm_eval(scores_i2t, scores_t2i, txt2img, img2txt):
 
 def main(args, config):
     utils.init_distributed_mode(args)
-
     device = torch.device(args.device)
 
     # fix the seed for reproducibility
@@ -278,21 +189,16 @@ def main(args, config):
 
     #### Dataset ####
     print("Creating retrieval dataset")
-    train_dataset, val_dataset, test_dataset = create_dataset('retrieval_%s' % config['dataset'], config)
+    val_dataset, test_dataset = create_dataset( args.data_dir, args.id_file, config)
 
-    if args.distributed:
-        num_tasks = utils.get_world_size()
-        global_rank = utils.get_rank()
-        samplers = create_sampler([train_dataset], [True], num_tasks, global_rank) + [None, None]
-    else:
-        samplers = [None, None, None]
+    samplers = [None, None]
 
-    train_loader, val_loader, test_loader = create_loader([train_dataset, val_dataset, test_dataset], samplers,
-                                                          batch_size=[config['batch_size_train']] + [
+    val_loader, test_loader = create_loader([val_dataset, test_dataset], samplers,
+                                                          batch_size=[
                                                               config['batch_size_test']] * 2,
-                                                          num_workers=[4, 4, 4],
-                                                          is_trains=[True, False, False],
-                                                          collate_fns=[None, None, None])
+                                                          num_workers=[8, 8],
+                                                          is_trains=[False, False],
+                                                          collate_fns=[None, None])
 
     #### Model ####
     print("Creating model")
@@ -302,12 +208,13 @@ def main(args, config):
 
     model = model.to(device)
 
+    print("Doing DDP")
     model_without_ddp = model
     if args.distributed:
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
         model_without_ddp = model.module
 
-    optimizer = torch.optim.AdamW(params=model.parameters(), lr=config['init_lr'], weight_decay=config['weight_decay'])
+    optimizer = torch.optim.AdamW(params=model.parameters(), lr=1e-5, weight_decay=0.05)
 
     best = 0
     best_epoch = 0
@@ -316,13 +223,6 @@ def main(args, config):
     start_time = time.time()
 
     for epoch in range(0, config['max_epoch']):
-        if not args.evaluate:
-            if args.distributed:
-                train_loader.sampler.set_epoch(epoch)
-
-            cosine_lr_schedule(optimizer, epoch, config['max_epoch'], config['init_lr'], config['min_lr'])
-
-            train_stats = train(model, train_loader, optimizer, epoch, device, config)
 
         score_val_i2t, score_val_t2i, = evaluation(model_without_ddp, val_loader, device, config)
         score_test_i2t, score_test_t2i = evaluation(model_without_ddp, test_loader, device, config)
@@ -354,8 +254,7 @@ def main(args, config):
                 with open(os.path.join(args.output_dir, "evaluate.txt"), "a") as f:
                     f.write(json.dumps(log_stats) + "\n")
             else:
-                log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
-                             **{f'val_{k}': v for k, v in val_result.items()},
+                log_stats = {**{f'val_{k}': v for k, v in val_result.items()},
                              **{f'test_{k}': v for k, v in test_result.items()},
                              'epoch': epoch,
                              'best_epoch': best_epoch,
@@ -366,9 +265,6 @@ def main(args, config):
         if args.evaluate:
             break
 
-        dist.barrier()
-        torch.cuda.empty_cache()
-
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     print('Training time {}'.format(total_time_str))
@@ -376,9 +272,11 @@ def main(args, config):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='./configs/retrieval_flickr.yaml')
-    parser.add_argument('--output_dir', default='output/Retrieval_flickr')
-    parser.add_argument('--evaluate', action='store_true')
+    parser.add_argument('--config', default='./new_evaluation/retrieval/configs/config.yml')
+    parser.add_argument('--data_dir', default='/graphics/scratch2/students/ghoshadh/SongAnimator/datasets/retrieval/')
+    parser.add_argument('--id_file', default='/graphics/scratch2/students/ghoshadh/SongAnimator/datasets/retrieval/metaphor_id.pickle')
+    parser.add_argument('--output_dir', default='output/Retrieval')
+    parser.add_argument('--evaluate', default=True, type=bool)
     parser.add_argument('--device', default='cuda')
     parser.add_argument('--seed', default=42, type=int)
     parser.add_argument('--world_size', default=1, type=int, help='number of distributed processes')
