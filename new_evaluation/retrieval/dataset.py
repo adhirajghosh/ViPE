@@ -5,6 +5,11 @@ from PIL import Image
 import pickle
 import os
 import glob
+import torch
+from torchvision.datasets.utils import download_url
+import json
+from PIL import Image
+
 from randaugment import RandomAugment
 
 class RetrievalDataset(Dataset):
@@ -36,22 +41,23 @@ class RetrievalDataset(Dataset):
             txt_id += 1
 
     def __len__(self):
-        return len(self.captions)
+        return len(self.dataset)
 
     def __getitem__(self, index):
+
         image_name = self.dataset[index]
         image = Image.open(image_name).convert('RGB')
         # Apply transformations if provided
         if self.transform is not None:
             image = self.transform(image)
         ds_id = image_name.split('/')[-1][0]
-        # caption_id = image_name.split('/')[-1].split('_')[1]
-        #
-        # caption = [k for k, v in self.ids.items() if v == caption_id][0]
-        return image, index, ds_id
+        caption_id = image_name.split('/')[-1].split('_')[1]
+
+        caption = [k for k, v in self.ids.items() if v == caption_id][0]
+        return image,  caption, index
 
 
-def create_dataset(dataset_dir, id_file, config, min_scale=0.5):
+def create_dataset(dataset_dir, id_file, config=None, min_scale=0.5):
     normalize = transforms.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711))
 
     transform_train = transforms.Compose([
@@ -64,26 +70,28 @@ def create_dataset(dataset_dir, id_file, config, min_scale=0.5):
         normalize,
     ])
     transform_test = transforms.Compose([
-        transforms.Resize((config['image_size'], config['image_size']), interpolation=InterpolationMode.BICUBIC),
+        transforms.Resize((400,400), interpolation=InterpolationMode.BICUBIC),
         transforms.ToTensor(),
         normalize,
     ])
 
-    # dataset = RetrievalDataset(transform_train, config['image_root'], config['ann_root'])
 
-    val_dir = dataset_dir+"/daivmet_val/"
-    val_split = glob.glob(os.path.join(val_dir, '**', '*.jpg'), recursive=True) + \
-                  glob.glob(os.path.join(val_dir, '**', '*.jpeg'), recursive=True) + \
-                  glob.glob(os.path.join(val_dir, '**', '*.png'), recursive=True)
-    val_dataset = RetrievalDataset(id_file, val_split, transform_test)
+    train_dir = dataset_dir+ "/image_train/"
+    train_split = glob.glob(os.path.join(train_dir, '**', '*.jpg'), recursive=True) + \
+                  glob.glob(os.path.join(train_dir, '**', '*.jpeg'), recursive=True) + \
+                  glob.glob(os.path.join(train_dir, '**', '*.png'), recursive=True)
 
-    test_dir = dataset_dir + "/daivmet_test/"
+    train_dataset = RetrievalDataset(id_file, train_split, transform_train)
+
+    test_dir = dataset_dir+ "/image_test/"
     test_split = glob.glob(os.path.join(test_dir, '**', '*.jpg'), recursive=True) + \
                 glob.glob(os.path.join(test_dir, '**', '*.jpeg'), recursive=True) + \
                 glob.glob(os.path.join(test_dir, '**', '*.png'), recursive=True)
     test_dataset = RetrievalDataset(id_file, test_split, transform_test)
 
-    return val_dataset, test_dataset
+
+    return train_dataset, test_dataset
+
 
 
 def create_loader(datasets, samplers, batch_size, num_workers, is_trains, collate_fns):
@@ -107,3 +115,10 @@ def create_loader(datasets, samplers, batch_size, num_workers, is_trains, collat
         )
         loaders.append(loader)
     return loaders
+
+def create_sampler(datasets, shuffles, num_tasks, global_rank):
+    samplers = []
+    for dataset,shuffle in zip(datasets,shuffles):
+        sampler = torch.utils.data.DistributedSampler(dataset, num_replicas=num_tasks, rank=global_rank, shuffle=shuffle)
+        samplers.append(sampler)
+    return samplers

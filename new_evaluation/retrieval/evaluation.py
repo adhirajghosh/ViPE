@@ -7,17 +7,16 @@ import time
 import datetime
 import json
 from pathlib import Path
-
+import torch.multiprocessing as mp
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
 import torch.distributed as dist
 from torch.utils.data import DataLoader
-
 from models.blip_retrieval import blip_retrieval
 import utils
-from dataset import create_dataset, create_loader
+from dataset import create_dataset, create_loader, create_sampler
 
 import torch
 from torchvision import transforms
@@ -25,6 +24,43 @@ from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import json
 import os
+
+
+def train(model, data_loader, optimizer, epoch, device, config):
+    # train
+    model.train()
+
+    metric_logger = utils.MetricLogger(delimiter="  ")
+    metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
+    metric_logger.add_meter('loss_itm', utils.SmoothedValue(window_size=1, fmt='{value:.4f}'))
+    metric_logger.add_meter('loss_ita', utils.SmoothedValue(window_size=1, fmt='{value:.4f}'))
+    header = 'Train Epoch: [{}]'.format(epoch)
+    print_freq = 50
+
+    for i, (image, caption, idx) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
+        image = image.to(device, non_blocking=True)
+        idx = idx.to(device, non_blocking=True)
+
+        if epoch > 0:
+            alpha = config['alpha']
+        else:
+            alpha = config['alpha'] * min(1, i / len(data_loader))
+
+        loss_ita, loss_itm = model(image, caption, alpha=alpha, idx=idx)
+        loss = loss_ita + loss_itm
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        metric_logger.update(loss_itm=loss_itm.item())
+        metric_logger.update(loss_ita=loss_ita.item())
+        metric_logger.update(lr=optimizer.param_groups[0]["lr"])
+
+    # gather the stats from all processes
+    metric_logger.synchronize_between_processes()
+    print("Averaged stats:", metric_logger.global_avg())
+    return {k: "{:.3f}".format(meter.global_avg) for k, meter in metric_logger.meters.items()}
 
 @torch.no_grad()
 def evaluation(model, data_loader, device, config):
@@ -60,7 +96,7 @@ def evaluation(model, data_loader, device, config):
 
     image_feats = []
     image_embeds = []
-    for image, img_id, _ in data_loader:
+    for image, img_caption, _ in data_loader:
         image = image.to(device)
         image_feat = model.visual_encoder(image)
         image_embed = model.vision_proj(image_feat[:, 0, :])
@@ -177,6 +213,9 @@ def itm_eval(scores_i2t, scores_t2i, txt2img, img2txt):
 
 
 def main(args, config):
+    os.environ['LOCAL_RANK'] = '0'
+    os.environ['WORLD_SIZE'] = '1'
+    # dist.init_process_group(backend='nccl')
     utils.init_distributed_mode(args)
     device = torch.device(args.device)
 
@@ -188,25 +227,34 @@ def main(args, config):
     cudnn.benchmark = True
 
     #### Dataset ####
-    print("Creating retrieval dataset")
-    val_dataset, test_dataset = create_dataset( args.data_dir, args.id_file, config)
 
-    samplers = [None, None]
 
-    val_loader, test_loader = create_loader([val_dataset, test_dataset], samplers,
-                                                          batch_size=[
-                                                              config['batch_size_test']] * 2,
-                                                          num_workers=[8, 8],
-                                                          is_trains=[False, False],
-                                                          collate_fns=[None, None])
+    print("Creating retrieval dataset on ", args.dataset)
+    train_dataset, test_dataset = create_dataset(os.path.join(args.data_dir,args.dataset), args.id_file, config)
+
+    if args.distributed:
+        num_tasks = utils.get_world_size()
+        global_rank = utils.get_rank()
+        samplers = create_sampler([train_dataset], [True], num_tasks, global_rank) + [None]
+    else:
+        samplers = [None, None]
+
+    print(len(train_dataset), len(test_dataset))
+    train_loader, test_loader = create_loader([train_dataset, test_dataset], samplers,
+                                batch_size=[config['batch_size_train'], config['batch_size_test']],
+                                num_workers=[8, 8],
+                                is_trains=[True, False],
+                                collate_fns=[None, None])
+
 
     #### Model ####
     print("Creating model")
     model = blip_retrieval(pretrained=config['pretrained'], image_size=config['image_size'], vit=config['vit'],
                            vit_grad_ckpt=config['vit_grad_ckpt'], vit_ckpt_layer=config['vit_ckpt_layer'],
                            queue_size=config['queue_size'], negative_all_rank=config['negative_all_rank'])
-
+    # model = Blip2Model.from_pretrained("Salesforce/blip2-opt-2.7b", torch_dtype=torch.float16)
     model = model.to(device)
+    # processor = Blip2Processor.from_pretrained("Salesforce/blip2-opt-2.7b")
 
     print("Doing DDP")
     model_without_ddp = model
@@ -223,16 +271,22 @@ def main(args, config):
     start_time = time.time()
 
     for epoch in range(0, config['max_epoch']):
+        if not args.evaluate:
+            if args.distributed:
+                train_loader.sampler.set_epoch(epoch)
 
-        score_val_i2t, score_val_t2i, = evaluation(model_without_ddp, val_loader, device, config)
+        utils.cosine_lr_schedule(optimizer, epoch, int(config['max_epoch']), float(config['init_lr']), float(config['min_lr']))
+
+        train_stats = train(model, train_loader, optimizer, epoch, device, config)
+
         score_test_i2t, score_test_t2i = evaluation(model_without_ddp, test_loader, device, config)
 
         if utils.is_main_process():
 
-            val_result = itm_eval(score_val_i2t, score_val_t2i, val_loader.dataset.txt2img, val_loader.dataset.img2txt)
-            print(val_result)
-
-            if val_result['r_mean'] > best:
+            test_result = itm_eval(score_test_i2t, score_test_t2i, test_loader.dataset.txt2img,
+                                   test_loader.dataset.img2txt)
+            print(test_result)
+            if test_result['r_mean'] > best:
                 save_obj = {
                     'model': model_without_ddp.state_dict(),
                     'optimizer': optimizer.state_dict(),
@@ -240,46 +294,45 @@ def main(args, config):
                     'epoch': epoch,
                 }
                 torch.save(save_obj, os.path.join(args.output_dir, 'checkpoint_best.pth'))
-                best = val_result['r_mean']
+                best = test_result['r_mean']
                 best_epoch = epoch
-
-                test_result = itm_eval(score_test_i2t, score_test_t2i, test_loader.dataset.txt2img,
-                                       test_loader.dataset.img2txt)
-                print(test_result)
-
             if args.evaluate:
-                log_stats = {**{f'val_{k}': v for k, v in val_result.items()},
-                             **{f'test_{k}': v for k, v in test_result.items()},
-                             }
+                log_stats = {
+                             **{f'test_{k}': v for k, v in test_result.items()}}
                 with open(os.path.join(args.output_dir, "evaluate.txt"), "a") as f:
                     f.write(json.dumps(log_stats) + "\n")
             else:
-                log_stats = {**{f'val_{k}': v for k, v in val_result.items()},
-                             **{f'test_{k}': v for k, v in test_result.items()},
-                             'epoch': epoch,
-                             'best_epoch': best_epoch,
-                             }
+                log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
+                            **{f'test_{k}': v for k, v in test_result.items()},
+                            'epoch': epoch,
+                            'best_epoch': best_epoch,
+                            }
+
                 with open(os.path.join(args.output_dir, "log.txt"), "a") as f:
                     f.write(json.dumps(log_stats) + "\n")
 
         if args.evaluate:
             break
 
+        dist.barrier()
+        torch.cuda.empty_cache()
+
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     print('Training time {}'.format(total_time_str))
-
+    dist.destroy_process_group()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='./new_evaluation/retrieval/configs/config.yml')
+    parser.add_argument('--config', default='./new_evaluation/retrieval/configs/config_base.yml')
     parser.add_argument('--data_dir', default='/graphics/scratch2/students/ghoshadh/SongAnimator/datasets/retrieval/')
+    parser.add_argument('--dataset', default='haivmet')
     parser.add_argument('--id_file', default='/graphics/scratch2/students/ghoshadh/SongAnimator/datasets/retrieval/metaphor_id.pickle')
-    parser.add_argument('--output_dir', default='output/Retrieval')
-    parser.add_argument('--evaluate', default=True, type=bool)
+    parser.add_argument('--output_dir', default='output/retrieval/haivmet_train/')
+    parser.add_argument('--evaluate', default=False, type=bool)
     parser.add_argument('--device', default='cuda')
     parser.add_argument('--seed', default=42, type=int)
-    parser.add_argument('--world_size', default=1, type=int, help='number of distributed processes')
+    parser.add_argument('--world_size', default=2, type=int, help='number of distributed processes')
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
     parser.add_argument('--distributed', default=True, type=bool)
     args = parser.parse_args()
@@ -290,4 +343,5 @@ if __name__ == '__main__':
 
     yaml.dump(config, open(os.path.join(args.output_dir, 'config.yaml'), 'w'))
 
+    # mp.spawn(main, args=(args, config), nprocs=args.world_size)
     main(args, config)

@@ -150,7 +150,7 @@ class BLIP_Retrieval(nn.Module):
                 weights_t2i = F.softmax(sim_t2i,dim=1)
                 weights_t2i.masked_fill_(mask, 0)     
 
-            image_embeds_world = all_gather_with_grad(image_embeds) 
+            image_embeds_world = all_gather_with_grad(image_embeds)
 
             # select a negative image (from all ranks) for each text
             image_embeds_neg = []    

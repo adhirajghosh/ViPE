@@ -1,12 +1,13 @@
 import os
 import zipfile
+import re
 import tqdm
 import torch
 import torch.distributed as dist
 import time
 from collections import defaultdict, deque
 import datetime
-
+import math
 import numpy as np
 import io
 import os
@@ -56,7 +57,7 @@ def zip_process(file):
 def generate_images(pipe, prompt_dict, ds_id, saving_path, batch_size, size, gpu):
     added_prompt = "high quality, HD, 32K, high focus, dramatic lighting, ultra-realistic, high detailed photography, vivid, vibrant,intricate,trending on artstation"
     negative_prompt = 'nude, naked, text, digits, worst quality, blurry, morbid, poorly drawn face, bad anatomy,distorted face, disfiguired, bad hands, missing fingers,cropped, deformed body, bloated, ugly, unrealistic'
-    for i in range(4):
+    for i in range(8,11):
         generator = torch.Generator(gpu).manual_seed(i)
         batch = []
         ids = []
@@ -71,7 +72,7 @@ def generate_images(pipe, prompt_dict, ds_id, saving_path, batch_size, size, gpu
                 #the last batch might not have the same size as batch_size so i used len(batch) instead of len(batch_size)
                 images = pipe(batch, generator=generator, negative_prompt=[negative_prompt]*len(batch), height = size, width = size).images
                 for num, (img_id, img) in enumerate(zip(ids, images)):
-                    img.save("{}/{}_{}_{}.png".format(saving_path, str(ds_id), ids[num], str(i+1)))
+                    img.save("{}/{}_{}_{}.png".format(saving_path, str(ds_id), ids[num], str(i)))
                 batch = []
                 ids = []
 
@@ -83,7 +84,7 @@ def generate_images_retrieval(pipe, ds, save_path, gpu):
     for sample in ds:
         prompt = sample['prompt']
         print(prompt)
-        for i in range(5):
+        for i in range(5,11):
             print("generating... ", i)
             image = pipe(prompt=prompt + added_prompt, negative_prompt=negative_prompt).images[0]
             outdir = os.path.join(save_path, sample['text'])
@@ -91,13 +92,13 @@ def generate_images_retrieval(pipe, ds, save_path, gpu):
                 os.makedirs(outdir)
 
             if prompt[-1] == '.':
-                outpath = os.path.join(outdir, '{}_{}.jpg'.format(prompt[:-1],str(i+1)))
+                outpath = os.path.join(outdir, '{}_{}.jpg'.format(prompt[:-1],str(i)))
             else:
-                outpath = os.path.join(outdir, '{}_{}.jpg'.format(prompt, str(i + 1)))
+                outpath = os.path.join(outdir, '{}_{}.jpg'.format(prompt, str(i)))
             image.save(outpath)
 
 
-import math
+
 
 
 def cosine_lr_schedule(optimizer, epoch, max_epoch, init_lr, min_lr):
@@ -373,3 +374,24 @@ def init_distributed_mode(args):
     torch.distributed.barrier()
     setup_for_distributed(args.rank == 0)
 
+
+def pre_caption(caption, max_words=50):
+    caption = re.sub(
+        r"([.!\"()*#:;~])",
+        ' ',
+        caption.lower(),
+    )
+    caption = re.sub(
+        r"\s{2,}",
+        ' ',
+        caption,
+    )
+    caption = caption.rstrip('\n')
+    caption = caption.strip(' ')
+
+    # truncate caption
+    caption_words = caption.split(' ')
+    if len(caption_words) > max_words:
+        caption = ' '.join(caption_words[:max_words])
+
+    return caption
