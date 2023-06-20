@@ -29,7 +29,7 @@ def parse_args():
     parser.add_argument('--dataset', help='Name of dataset', type=str, default='flute')
     # parser.add_argument('--model', help='which model to use', type=str, default='haivmet')
     parser.add_argument('--checkpoint', help='path to the GPT to use', type=str, default='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/saved_models_mine/gpt2-medium_context_ctx_7_lr_5e-05-v4.ckpt/')
-    parser.add_argument('--savedir', help='where to save the dataset', type=str, default='/graphics/scratch2/students/ghoshadh/SongAnimator/datasets/retrieval/new/')
+    parser.add_argument('--savedir', help='where to save the dataset', type=str, default='/graphics/scratch2/students/ghoshadh/SongAnimator/datasets/retrieval/')
     parser.add_argument("--img_size", type=int, default=400)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument('--sample', help='Sampling or no', type=bool, default=False)
@@ -52,29 +52,34 @@ def visualizer(text, model, tokenizer,device,do_sample,epsilon_cutoff=.0001,temp
 
 def main():
     args = parse_args()
-    ds_path = os.path.join(args.savedir, 'vipe')
-    if not os.path.exists(ds_path):
-        os.makedirs(ds_path)
+    # ds_path = os.path.join(args.savedir, 'chatgpt')
+    # if not os.path.exists(ds_path):
+    #     os.makedirs(ds_path)
+    #
+    # ds_path = os.path.join(args.savedir, 'haivmet')
+    # if not os.path.exists(ds_path):
+    #     os.makedirs(ds_path)
 
-    ds_path = os.path.join(args.savedir, 'haivmet')
-    if not os.path.exists(ds_path):
-        os.makedirs(ds_path)
 
-    device = 'cuda:1'
-
-    model = GPT2LMHeadModel.from_pretrained(args.checkpoint)
-    model.to(device)
-    tokenizer = GPT2Tokenizer.from_pretrained('gpt2-medium')
-    tokenizer.pad_token = tokenizer.eos_token
-
+    #
+    # model = GPT2LMHeadModel.from_pretrained(args.checkpoint)
+    # model.to(device)
+    # tokenizer = GPT2Tokenizer.from_pretrained('gpt2-medium')
+    # tokenizer.pad_token = tokenizer.eos_token
     model_id = 'dreamlike-art/dreamlike-photoreal-2.0'
-    pipe = StableDiffusionPipeline.from_pretrained(model_id).to(device)
-
     batch_size = args.batch_size
 
-    list1= ['flute']
+    list1 = ['ad_slogans', 'flute']
+    list2 = ['bizzoni', 'copoet', 'figqa', 'tsvetkov']
+    list3 = ['tsvetkov']
 
-    for i in list1:
+    with open('./datasets/retrieval/chatgpt_metaphor_id.pickle', 'rb') as handle:
+        chatgpt_id = pickle.load(handle)
+
+
+    device = 'cuda:1'
+    pipe = StableDiffusionPipeline.from_pretrained(model_id).to(device)
+    for i in list3:
         # print("The dataset being used is ", args.dataset)
         print("The dataset being used is ", i)
         # folder_dict = zip_process(os.path.join(args.datadir, args.dataset+'.zip'))
@@ -105,25 +110,48 @@ def main():
         #     os.makedirs(haiv_path)
         # generate_images(pipe, prompt_dict_haiv, ds_id, haiv_path, batch_size, args.img_size, device)
 
-        ds_ours = []
+        # ds_ours = []
+        # for i, metaphor in enumerate(folder_dict.keys()):
+        #     y = {}
+        #     y['text'] = metaphor
+        #     y['prompt'] = visualizer([metaphor], model, tokenizer, device, args.sample,
+        #                              epsilon_cutoff=.0005, temperature=1.1)[0]
+        #     ds_ours.append(y)
+        #
+        # prompt_dict_ours = {}
+        # for i in ds_ours:
+        #     prompt_dict_ours[metaphor_id[i['text']]] = i['prompt']
+        #
+        # # with open(os.path.join(args.savedir,'prompt_dict_vipe.pickle'), 'wb') as handle:
+        # #     pickle.dump(prompt_dict_ours, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        #
+        # ours_path = os.path.join(args.savedir, 'vipe')
+        # if not os.path.exists(ours_path):
+        #     os.makedirs(ours_path)
+        # generate_images(pipe, prompt_dict_ours, ds_id, ours_path, batch_size, args.img_size, device)
+
+
+        ds_chatgpt = []
+
         for i, metaphor in enumerate(folder_dict.keys()):
             y = {}
             y['text'] = metaphor
-            y['prompt'] = visualizer([metaphor], model, tokenizer, device, args.sample,
-                                     epsilon_cutoff=.0005, temperature=1.1)[0]
-            ds_ours.append(y)
+            idx = metaphor_id[metaphor]
+            y['prompt'] = chatgpt_id[idx]
+            print (idx, " ", y['prompt'])
+            ds_chatgpt.append(y)
 
         prompt_dict_ours = {}
-        for i in ds_ours:
+        for i in ds_chatgpt:
             prompt_dict_ours[metaphor_id[i['text']]] = i['prompt']
 
         # with open(os.path.join(args.savedir,'prompt_dict_vipe.pickle'), 'wb') as handle:
         #     pickle.dump(prompt_dict_ours, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-        ours_path = os.path.join(args.savedir, 'vipe')
-        if not os.path.exists(ours_path):
-            os.makedirs(ours_path)
-        generate_images(pipe, prompt_dict_ours, ds_id, ours_path, batch_size, args.img_size, device)
+        chatgpt_path = os.path.join(args.savedir, 'chatgpt')
+        if not os.path.exists(chatgpt_path):
+            os.makedirs(chatgpt_path)
+        generate_images(pipe, prompt_dict_ours, ds_id, chatgpt_path, batch_size, args.img_size, device)
 
 if __name__ == '__main__':
     main()

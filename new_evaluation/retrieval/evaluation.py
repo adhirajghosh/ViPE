@@ -169,15 +169,19 @@ def evaluation(model, data_loader, device, config):
 def itm_eval(scores_i2t, scores_t2i, txt2img, img2txt):
     # Images->Text
     ranks = np.zeros(scores_i2t.shape[0])
+    print(scores_i2t.shape)
+    print(scores_t2i.shape)
     for index, score in enumerate(scores_i2t):
         inds = np.argsort(score)[::-1]
         # Score
-        rank = 1e20
-        for i in img2txt[index]:
-            tmp = np.where(inds == i)[0][0]
-            if tmp < rank:
-                rank = tmp
-        ranks[index] = rank
+        ranks[index] = np.where(inds == img2txt[index])[0][0]
+        # rank = 1e20
+        # for i in img2txt[index]:
+        #     tmp = np.where(inds == i)[0][0]
+        #     # print(tmp)
+        #     if tmp < rank:
+        #         rank = tmp
+        # ranks[index] = rank
 
     # Compute metrics
     tr1 = 100.0 * len(np.where(ranks < 1)[0]) / len(ranks)
@@ -189,7 +193,14 @@ def itm_eval(scores_i2t, scores_t2i, txt2img, img2txt):
 
     for index, score in enumerate(scores_t2i):
         inds = np.argsort(score)[::-1]
-        ranks[index] = np.where(inds == txt2img[index])[0][0]
+        # ranks[index] = np.where(inds == txt2img[index])[0][0]
+        rank = 1e20
+        for i in txt2img[index]:
+            tmp = np.where(inds == i)[0][0]
+            # print(tmp)
+            if tmp < rank:
+                rank = tmp
+        ranks[index] = rank
 
     # Compute metrics
     ir1 = 100.0 * len(np.where(ranks < 1)[0]) / len(ranks)
@@ -215,7 +226,7 @@ def itm_eval(scores_i2t, scores_t2i, txt2img, img2txt):
 def main(args, config):
     os.environ['LOCAL_RANK'] = '0'
     os.environ['WORLD_SIZE'] = '1'
-    # dist.init_process_group(backend='nccl')
+    #
     utils.init_distributed_mode(args)
     device = torch.device(args.device)
 
@@ -227,10 +238,16 @@ def main(args, config):
     cudnn.benchmark = True
 
     #### Dataset ####
-
+    if args.id_type == 'metaphor':
+        id_file = args.data_dir+"metaphor_id.pickle"
+    else:
+        if args.dataset == 'haivmet':
+            id_file = args.data_dir + "prompt_dict_haivmet.pickle"
+        else:
+            id_file = args.data_dir + "prompt_dict_vipe.pickle"
 
     print("Creating retrieval dataset on ", args.dataset)
-    train_dataset, test_dataset = create_dataset(os.path.join(args.data_dir,args.dataset), args.id_file, config)
+    train_dataset, test_dataset = create_dataset(os.path.join(args.data_dir,args.dataset), id_file, config)
 
     if args.distributed:
         num_tasks = utils.get_world_size()
@@ -262,7 +279,7 @@ def main(args, config):
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
         model_without_ddp = model.module
 
-    optimizer = torch.optim.AdamW(params=model.parameters(), lr=1e-5, weight_decay=0.05)
+    optimizer = torch.optim.AdamW(params=model.parameters(), lr=1e-4, weight_decay=0.05)
 
     best = 0
     best_epoch = 0
@@ -275,9 +292,13 @@ def main(args, config):
             if args.distributed:
                 train_loader.sampler.set_epoch(epoch)
 
-        utils.cosine_lr_schedule(optimizer, epoch, int(config['max_epoch']), float(config['init_lr']), float(config['min_lr']))
+            utils.cosine_lr_schedule(optimizer, epoch, int(config['max_epoch']), float(1e-4), float(config['min_lr']))
 
-        train_stats = train(model, train_loader, optimizer, epoch, device, config)
+            train_stats = train(model, train_loader, optimizer, epoch, device, config)
+
+        # model_without_ddp = model_without_ddp.to("cuda:1")
+        # # for data in test_loader:
+        # #     data = data.to("cuda:1")
 
         score_test_i2t, score_test_t2i = evaluation(model_without_ddp, test_loader, device, config)
 
@@ -323,18 +344,19 @@ def main(args, config):
     dist.destroy_process_group()
 
 if __name__ == '__main__':
+    torch.multiprocessing.set_start_method('spawn')
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', default='./new_evaluation/retrieval/configs/config_base.yml')
     parser.add_argument('--data_dir', default='/graphics/scratch2/students/ghoshadh/SongAnimator/datasets/retrieval/')
     parser.add_argument('--dataset', default='haivmet')
-    parser.add_argument('--id_file', default='/graphics/scratch2/students/ghoshadh/SongAnimator/datasets/retrieval/metaphor_id.pickle')
-    parser.add_argument('--output_dir', default='output/retrieval/haivmet_train/')
+    parser.add_argument('--id_type', default='prompt', help='prompt or metaphor')
+    parser.add_argument('--output_dir', default='output/new/haivmet_train_lr1e-4/')
     parser.add_argument('--evaluate', default=False, type=bool)
     parser.add_argument('--device', default='cuda')
     parser.add_argument('--seed', default=42, type=int)
     parser.add_argument('--world_size', default=2, type=int, help='number of distributed processes')
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
-    parser.add_argument('--distributed', default=True, type=bool)
+    parser.add_argument('--distributed', default=False, type=bool)
     args = parser.parse_args()
 
     config = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
@@ -345,3 +367,5 @@ if __name__ == '__main__':
 
     # mp.spawn(main, args=(args, config), nprocs=args.world_size)
     main(args, config)
+
+

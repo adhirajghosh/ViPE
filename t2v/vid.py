@@ -2,7 +2,7 @@ import os
 import inspect
 import fire
 from diffusers import StableDiffusionPipeline
-from diffusers.schedulers import DDIMScheduler, LMSDiscreteScheduler, PNDMScheduler, DPMSolverMultistepScheduler
+from diffusers.schedulers import DDIMScheduler, LMSDiscreteScheduler, PNDMScheduler
 from time import time
 from PIL import Image
 from einops import rearrange
@@ -44,7 +44,7 @@ def diffuse(
         cond_latents = cond_latents.to(device=torch_device)
 
     # if we use LMSDiscreteScheduler, let's make sure latents are mulitplied by sigmas
-    if isinstance(pipe.scheduler, LMSDiscreteScheduler) or isinstance(pipe.scheduler, DPMSolverMultistepScheduler):
+    if isinstance(pipe.scheduler, LMSDiscreteScheduler):
         cond_latents = cond_latents * pipe.scheduler.sigmas[0]
 
     # init the scheduler
@@ -63,7 +63,7 @@ def diffuse(
     for i, t in enumerate(pipe.scheduler.timesteps):
 
         latent_model_input = torch.cat([cond_latents] * 2)
-        if isinstance(pipe.scheduler, LMSDiscreteScheduler) or isinstance(pipe.scheduler, DPMSolverMultistepScheduler):
+        if isinstance(pipe.scheduler, LMSDiscreteScheduler):
             sigma = pipe.scheduler.sigmas[i]
             latent_model_input = latent_model_input / ((sigma ** 2 + 1) ** 0.5)
 
@@ -74,8 +74,8 @@ def diffuse(
         noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
         noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
 
-        if isinstance(pipe.scheduler, LMSDiscreteScheduler) or isinstance(pipe.scheduler, DPMSolverMultistepScheduler):
-            cond_latents = pipe.scheduler.step(noise_pred, i+1, cond_latents, **extra_step_kwargs)["prev_sample"]
+        if isinstance(pipe.scheduler, LMSDiscreteScheduler):
+            cond_latents = pipe.scheduler.step(noise_pred, i, cond_latents, **extra_step_kwargs)["prev_sample"]
         else:
             cond_latents = pipe.scheduler.step(noise_pred, t, cond_latents, **extra_step_kwargs)["prev_sample"]
 

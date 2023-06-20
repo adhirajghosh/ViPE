@@ -41,6 +41,9 @@ class BLIP_Pretrain(nn.Module):
             checkpoint = torch.hub.load_state_dict_from_url(
                 url="https://dl.fbaipublicfiles.com/deit/deit_base_patch16_224-b5f2ef4d.pth",
                 map_location="cpu", check_hash=True)
+            # checkpoint = torch.hub.load_state_dict_from_url(
+            #     url="https://storage.googleapis.com/sfr-vision-language-research/LAVIS/models/BLIP2/clip_vit_L.pth",
+            #     map_location="cpu", check_hash=True)
             state_dict = checkpoint["model"]     
             msg = self.visual_encoder.load_state_dict(state_dict,strict=False)
         elif vit=='large':

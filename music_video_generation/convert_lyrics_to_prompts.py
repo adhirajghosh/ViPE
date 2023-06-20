@@ -3,7 +3,7 @@ import torch
 from modeling import GPT2Convertor
 from utils import dotdict,generate_from_sentences
 import argparse
-
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
 def parse_args():
     parser = argparse.ArgumentParser(description="train hehe?")
@@ -18,6 +18,9 @@ def parse_args():
     parser.add_argument(
         "--check_path", type=str, default='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/', help="path to save the model"
     )
+    parser.add_argument("--checkpoint", type=str,
+                        default='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/saved_models_mine/gpt2-medium_context_ctx_7_lr_5e-05-v4.ckpt/',
+                        help="path to save the model")
 
     parser.add_argument(
         "--batch_size", type=int, default=30
@@ -82,21 +85,10 @@ def main():
         check_path = args.check_path
         check_path = check_path + 'ml_logs_checkpoints/{}/'.format(args.model_name)
 
-    model = GPT2Convertor(hparams)
-
-    check_point_name='{}_context_ctx_{}_lr_5e-05-v4.ckpt'.format(args.model_name,hparams.context_length )
-
-
-    #check_point_name='gpt2-medium-v4.ckpt'
-
-    # check_point_name='gpt2_token_type_ids_context_ctx_5_lr_5e-05.ckpt'
-    #check_path='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/ml_logs_checkpoints/gpt2_old/'
-    checkpoint = torch.load(check_path+check_point_name, map_location=lambda storage, loc: storage)
-    model.load_state_dict(checkpoint['state_dict'])
-    print('checkpoint loaded')
-    tokenizer = model.tokenizer
-    model=model.model
+    model = GPT2LMHeadModel.from_pretrained(args.checkpoint)
     model.to(args.device)
+    tokenizer = GPT2Tokenizer.from_pretrained('gpt2-medium')
+    tokenizer.pad_token = tokenizer.eos_token
 
     with open(args.lyrics, 'r') as file:
         lyrics = file.read()

@@ -72,7 +72,6 @@ class BLIP_Retrieval(nn.Module):
     def forward(self, image, caption, alpha, idx):
         with torch.no_grad():
             self.temp.clamp_(0.001,0.5)
-        
         image_embeds = self.visual_encoder(image) 
         image_atts = torch.ones(image_embeds.size()[:-1],dtype=torch.long).to(image.device)        
         image_feat = F.normalize(self.vision_proj(image_embeds[:,0,:]),dim=-1)    

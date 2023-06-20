@@ -16,6 +16,7 @@ class RetrievalDataset(Dataset):
     def __init__(self, id_file, dataset, transform=None):
         with open(id_file, 'rb') as handle:
             caption_ids = pickle.load(handle)
+        self.id_file = id_file
         self.ids = caption_ids
         self.dataset = dataset
         self.transform = transform
@@ -25,20 +26,37 @@ class RetrievalDataset(Dataset):
 
         self.text = []
         self.image = []
-        self.txt2img = {}
         self.img2txt = {}
+        self.txt2img = {}
+
 
         txt_id = 0
 
         for img_id,image_name in enumerate(dataset):
             self.image.append(image_name)
-            self.img2txt[img_id] = []
             caption_id = image_name.split('/')[-1].split('_')[1]
-            caption = [k for k, v in self.ids.items() if v == caption_id][0]
-            self.text.append(caption)
-            self.img2txt[img_id].append(txt_id)
-            self.txt2img[txt_id] = img_id
-            txt_id += 1
+
+            # self.img2txt[img_id] = []
+
+            if 'metaphor' in self.id_file:
+                caption = [k for k, v in self.ids.items() if v == caption_id][0]
+            else:
+                caption = [w for k, (v, w) in self.ids.items() if v == caption_id][0]
+
+            if caption not in self.text:
+                self.text.append(caption)
+                self.txt2img[txt_id] = []
+                txt_id+=1
+
+            # self.img2txt[img_id].append(txt_id)
+            # self.txt2img[txt_id] = img_id
+            # txt_id += 1
+            #
+            self.img2txt[img_id] = txt_id-1
+            self.txt2img[txt_id-1].append(img_id)
+
+
+
 
     def __len__(self):
         return len(self.dataset)
@@ -53,7 +71,10 @@ class RetrievalDataset(Dataset):
         ds_id = image_name.split('/')[-1][0]
         caption_id = image_name.split('/')[-1].split('_')[1]
 
-        caption = [k for k, v in self.ids.items() if v == caption_id][0]
+        if 'metaphor' in self.id_file:
+            caption = [k for k, v in self.ids.items() if v == caption_id][0]
+        else:
+            caption = [w for k, (v, w) in self.ids.items() if v == caption_id][0]
         return image,  caption, index
 
 
@@ -70,7 +91,7 @@ def create_dataset(dataset_dir, id_file, config=None, min_scale=0.5):
         normalize,
     ])
     transform_test = transforms.Compose([
-        transforms.Resize((400,400), interpolation=InterpolationMode.BICUBIC),
+        transforms.Resize((config['image_size'],config['image_size']), interpolation=InterpolationMode.BICUBIC),
         transforms.ToTensor(),
         normalize,
     ])
