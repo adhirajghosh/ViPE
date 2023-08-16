@@ -1,8 +1,9 @@
 import os
-
-import PIL.Image
+from pytube import YouTube
+from PIL import Image
 import numpy as np
 import torch
+from pathlib import Path
 import torchvision
 from torchvision.transforms import Resize, InterpolationMode
 import imageio
@@ -11,6 +12,11 @@ import cv2
 from PIL import Image
 import decord
 from moviepy.editor import VideoFileClip, concatenate_videoclips
+from moviepy.editor import ImageSequenceClip
+from moviepy.editor import concatenate_videoclips
+from moviepy.editor import AudioFileClip
+import whisper
+
 
 def create_video(frames, fps, rescale=False, path=None, watermark=None):
     if path is None:
@@ -32,6 +38,21 @@ def create_video(frames, fps, rescale=False, path=None, watermark=None):
 
     imageio.mimsave(path, outputs, fps=fps)
     return path
+
+def save_images(frames, path=None, frame_index=0):
+
+    for i, x in enumerate(frames):
+        print("Generating ", frame_index)
+        x = torchvision.utils.make_grid(torch.Tensor(x), nrow=4)
+        x = (x * 255).numpy().astype(np.uint8)
+
+        im = Image.fromarray(x)
+        # outpath = os.path.join(outdir, 'frame%06d.jpg' % 0)
+        outpath = os.path.join(path, 'frame%06d.jpg' % frame_index)
+        im.save(outpath)
+        frame_index += 1
+    return frame_index
+
 
 def create_gif(frames, fps, rescale=False, path=None, watermark=None):
     if path is None:
@@ -95,6 +116,12 @@ def post_process_gif(list_of_results, image_resolution):
     output_file = "/tmp/ddxk.gif"
     imageio.mimsave(output_file, list_of_results, fps=4)
     return output_file
+
+class dotdict(dict):
+    """dot.notation access to dictionary attributes"""
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
 
 
 class CrossFrameAttnProcessor:
@@ -180,3 +207,87 @@ def merge_mp4(folder_path, output_path):
 
     # Write the final merged video to the output file
     final_video.write_videofile(output_path, codec='libx264')
+
+
+def create_video_from_images(images, audio_file, output_file, fps):
+    # Create an ImageSequenceClip from the list of images
+    clip = ImageSequenceClip(images, fps=fps)
+
+    # Set the duration of the clip based on the number of images and the desired FPS
+    duration = len(images) / fps
+    clip = clip.set_duration(duration)
+
+    # Load the audio file
+    audio = AudioFileClip(audio_file)
+
+    # Set the audio of the clip
+    clip = clip.set_audio(audio)
+
+    clip.write_videofile(output_file, codec='libx264', audio_codec='aac', temp_audiofile='temp_audio.m4a',
+                         remove_temp=True)
+
+    print(f"Video created: {output_file}")
+
+def generate_from_sentences(text, model, tokenizer,device,do_sample,top_k=100, epsilon_cutoff=.00005, temperature=1):
+    text=[tokenizer.eos_token +  i + tokenizer.eos_token for i in text]
+    batch=tokenizer(text, padding=True, return_tensors="pt")
+
+    input_ids = batch["input_ids"].to(device)
+    attention_mask = batch["attention_mask"].to(device)
+
+
+    # Set token type IDs for the prompts
+    max_prompt_length=50
+
+    max_length=input_ids.shape[1] + max_prompt_length
+    generated_ids = model.generate(input_ids=input_ids,attention_mask=attention_mask, max_length=max_length, do_sample=do_sample,top_k=top_k, epsilon_cutoff=epsilon_cutoff, temperature=temperature)
+
+    pred_caps = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
+
+    return pred_caps
+
+
+def youtube2mp3 (url,outdir):
+    yt = YouTube(url)
+    video = yt.streams.filter(abr='192kbps').last()
+
+    out_file = video.download(output_path=outdir)
+    base, ext = os.path.splitext(out_file)
+    song_name = f'{yt.title}.mp3'
+    new_file = Path(f'{base}.mp3')
+    os.rename(out_file, new_file)
+
+    if new_file.exists():
+        print(f'{yt.title} has been successfully downloaded.')
+    else:
+        print(f'ERROR: {yt.title}could not be downloaded!')
+
+    return song_name
+
+def whisper_transcribe(
+        audio_fpath="audio.mp3", device='cuda'):
+    whispers = {
+        'tiny': None,  # 5.83 s
+        'large': None  # 3.73 s
+    }
+    # accelerated runtime required for whisper
+    # to do: pypi package for whisper
+
+    for k in whispers.keys():
+        options = whisper.DecodingOptions(
+            task='translate',
+            language='en',
+        )
+        # to do: be more proactive about cleaning up these models when we're done with them
+        model = whisper.load_model(k).to(device)
+
+        # start = time.time()
+        print(f"Transcribing audio with whisper-{k}")
+
+        # to do: calling transcribe like this unnecessarily re-processes audio each time.
+        whispers[k] = model.transcribe(audio_fpath, task='translate')  # re-processes audio each time, ~10s overhead?
+        # print(f"elapsed: {time.time() - start}")
+    return whispers
+
+
+

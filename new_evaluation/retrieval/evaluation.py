@@ -16,7 +16,7 @@ import torch.distributed as dist
 from torch.utils.data import DataLoader
 from models.blip_retrieval import blip_retrieval
 import utils
-from dataset import create_dataset, create_loader, create_sampler
+from dataset import create_train_dataset, create_test_dataset, create_loader, create_sampler
 
 import torch
 from torchvision import transforms
@@ -24,6 +24,7 @@ from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import json
 import os
+
 
 
 def train(model, data_loader, optimizer, epoch, device, config):
@@ -224,11 +225,15 @@ def itm_eval(scores_i2t, scores_t2i, txt2img, img2txt):
 
 
 def main(args, config):
-    os.environ['LOCAL_RANK'] = '0'
-    os.environ['WORLD_SIZE'] = '1'
+    if 'LOCAL_RANK' not in os.environ:
+        os.environ['LOCAL_RANK'] = '0'
+    if 'WORLD_SIZE' not in os.environ:
+        os.environ['WORLD_SIZE'] = '1'
     #
     utils.init_distributed_mode(args)
+
     device = torch.device(args.device)
+
 
     # fix the seed for reproducibility
     seed = args.seed + utils.get_rank()
@@ -243,25 +248,33 @@ def main(args, config):
     else:
         if args.dataset == 'haivmet':
             id_file = args.data_dir + "prompt_dict_haivmet.pickle"
-        else:
+        elif args.dataset ==  'vipe':
             id_file = args.data_dir + "prompt_dict_vipe.pickle"
+        elif args.dataset == 'chatgpt':
+            id_file = args.data_dir + "prompt_dict_chatgpt.pickle"
 
     print("Creating retrieval dataset on ", args.dataset)
-    train_dataset, test_dataset = create_dataset(os.path.join(args.data_dir,args.dataset), id_file, config)
 
-    if args.distributed:
-        num_tasks = utils.get_world_size()
-        global_rank = utils.get_rank()
-        samplers = create_sampler([train_dataset], [True], num_tasks, global_rank) + [None]
+    if args.evaluate:
+        test_dataset = create_test_dataset(os.path.join(args.data_dir,args.dataset, 'eval'), id_file, config)
+        samplers = [None]
+
+        test_loader = create_loader([test_dataset], samplers,
+                                    batch_size=[config['batch_size_test']],
+                                    num_workers=[ 8],
+                                    is_trains=[ False],
+                                    collate_fns=[ None])[0]
+        print(len(test_dataset))
     else:
+        train_dataset = create_train_dataset(os.path.join(args.data_dir, args.dataset, 'train'), id_file, config)
+        test_dataset = create_test_dataset(os.path.join(args.data_dir, args.dataset, 'train'), id_file, config)
         samplers = [None, None]
-
-    print(len(train_dataset), len(test_dataset))
-    train_loader, test_loader = create_loader([train_dataset, test_dataset], samplers,
-                                batch_size=[config['batch_size_train'], config['batch_size_test']],
-                                num_workers=[8, 8],
-                                is_trains=[True, False],
-                                collate_fns=[None, None])
+        train_loader, test_loader = create_loader([train_dataset, test_dataset], samplers,
+                                                  batch_size=[config['batch_size_train'], config['batch_size_test']],
+                                                  num_workers=[8, 8],
+                                                  is_trains=[True, False],
+                                                  collate_fns=[None, None])
+        print(len(train_dataset), len(test_dataset))
 
 
     #### Model ####
@@ -269,11 +282,10 @@ def main(args, config):
     model = blip_retrieval(pretrained=config['pretrained'], image_size=config['image_size'], vit=config['vit'],
                            vit_grad_ckpt=config['vit_grad_ckpt'], vit_ckpt_layer=config['vit_ckpt_layer'],
                            queue_size=config['queue_size'], negative_all_rank=config['negative_all_rank'])
-    # model = Blip2Model.from_pretrained("Salesforce/blip2-opt-2.7b", torch_dtype=torch.float16)
     model = model.to(device)
-    # processor = Blip2Processor.from_pretrained("Salesforce/blip2-opt-2.7b")
 
-    print("Doing DDP")
+
+    print("Doing DDP", sum(p.numel() for p in model.parameters()))
     model_without_ddp = model
     if args.distributed:
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
@@ -289,16 +301,11 @@ def main(args, config):
 
     for epoch in range(0, config['max_epoch']):
         if not args.evaluate:
-            if args.distributed:
-                train_loader.sampler.set_epoch(epoch)
 
             utils.cosine_lr_schedule(optimizer, epoch, int(config['max_epoch']), float(1e-4), float(config['min_lr']))
 
             train_stats = train(model, train_loader, optimizer, epoch, device, config)
 
-        # model_without_ddp = model_without_ddp.to("cuda:1")
-        # # for data in test_loader:
-        # #     data = data.to("cuda:1")
 
         score_test_i2t, score_test_t2i = evaluation(model_without_ddp, test_loader, device, config)
 
@@ -344,19 +351,20 @@ def main(args, config):
     dist.destroy_process_group()
 
 if __name__ == '__main__':
-    torch.multiprocessing.set_start_method('spawn')
+    # torch.multiprocessing.set_start_method('spawn')
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', default='./new_evaluation/retrieval/configs/config_base.yml')
     parser.add_argument('--data_dir', default='/graphics/scratch2/students/ghoshadh/SongAnimator/datasets/retrieval/')
     parser.add_argument('--dataset', default='haivmet')
-    parser.add_argument('--id_type', default='prompt', help='prompt or metaphor')
+    parser.add_argument('--id_type', default='metaphor', help='prompt or metaphor')
     parser.add_argument('--output_dir', default='output/new/haivmet_train_lr1e-4/')
     parser.add_argument('--evaluate', default=False, type=bool)
     parser.add_argument('--device', default='cuda')
+    parser.add_argument('--gpu', default='0,1')
     parser.add_argument('--seed', default=42, type=int)
-    parser.add_argument('--world_size', default=2, type=int, help='number of distributed processes')
+    parser.add_argument('--world_size', default=1, type=int, help='number of distributed processes')
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
-    parser.add_argument('--distributed', default=False, type=bool)
+    parser.add_argument('--distributed', default=True, type=bool)
     args = parser.parse_args()
 
     config = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)

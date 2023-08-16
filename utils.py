@@ -7,6 +7,7 @@ import os
 import spacy
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 import clip
+from PIL import Image
 from transformers import AutoProcessor, AutoTokenizer, CLIPModel
 
 
@@ -163,3 +164,18 @@ def cond_clip(embeds, images, gpu="cuda"):
 
     return clip_score/i
 
+@torch.no_grad()
+def latent_to_image(latents, SD):
+    image = SD.decode_latents(latents)
+    image = SD.numpy_to_pil(image)
+    return image
+
+def load_gif(path):
+    gif = Image.open(path)
+    frames = []
+    for i in range(1, gif.n_frames):
+        gif.seek(i)
+        frame = np.array(gif)
+        frames.append(torch.tensor(frame).unsqueeze(0))
+        frames[-1] = frames[-1].permute(0, 3, 1, 2)
+    return torch.cat(frames, dim=0)

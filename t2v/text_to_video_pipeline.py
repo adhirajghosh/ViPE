@@ -13,6 +13,7 @@ from diffusers.schedulers import KarrasDiffusionSchedulers
 from diffusers.pipelines.stable_diffusion import StableDiffusionSafetyChecker
 import PIL
 from PIL import Image
+from utils import save_images
 from kornia.morphology import dilation
 
 
@@ -150,7 +151,7 @@ class TextToVideoPipeline(StableDiffusionPipeline):
                     te = torch.cat([repeat(text_embeddings[0, :, :], "c k -> f c k", f=f),
                                    repeat(text_embeddings[1, :, :], "c k -> f c k", f=f)])
                     noise_pred = self.unet(
-                        latent_model_input, t, encoder_hidden_states=te).sample.to(dtype=latents_dtype)
+                        latent_model_input, t, encoder_hidden_states=te).sample.to(latents.device)
 
                 # perform guidance
                 if do_classifier_free_guidance:
@@ -164,6 +165,7 @@ class TextToVideoPipeline(StableDiffusionPipeline):
                 # compute the previous noisy sample x_t -> x_t-1
                 latents = self.scheduler.step(
                     noise_pred, t, latents, **extra_step_kwargs).prev_sample
+
                 # latents = latents - alpha * grads / (torch.norm(grads) + 1e-10)
                 # call the callback, if provided
 
@@ -178,9 +180,9 @@ class TextToVideoPipeline(StableDiffusionPipeline):
                     progress_bar.update()
                     if callback is not None and i % callback_steps == 0:
                         callback(i, t, latents)
-
+        return_latents = latents[-1]
         latents = rearrange(latents, "(b f) c w h -> b c f  w h", f=f)
-
+        print("latent shape t2v_pipeline L182 ", latents.shape)
         res = {"x0": latents.detach().clone()}
         if x_t0_1 is not None:
             x_t0_1 = rearrange(x_t0_1, "(b f) c w h -> b c f  w h", f=f)
@@ -188,7 +190,7 @@ class TextToVideoPipeline(StableDiffusionPipeline):
         if x_t1_1 is not None:
             x_t1_1 = rearrange(x_t1_1, "(b f) c w h -> b c f  w h", f=f)
             res["x_t1_1"] = x_t1_1.detach().clone()
-        return res
+        return res, return_latents
 
     def decode_latents(self, latents):
         video_length = latents.shape[2]
@@ -355,7 +357,7 @@ class TextToVideoPipeline(StableDiffusionPipeline):
         shape = (batch_size, num_channels_latents, 1, height //
                  self.vae_scale_factor, width // self.vae_scale_factor)
 
-        ddim_res = self.DDIM_backward(num_inference_steps=num_inference_steps, timesteps=timesteps, skip_t=1000, t0=t0, t1=t1, do_classifier_free_guidance=do_classifier_free_guidance,
+        ddim_res, _ = self.DDIM_backward(num_inference_steps=num_inference_steps, timesteps=timesteps, skip_t=1000, t0=t0, t1=t1, do_classifier_free_guidance=do_classifier_free_guidance,
                                       null_embs=null_embs, text_embeddings=text_embeddings, latents_local=xT, latents_dtype=dtype, guidance_scale=guidance_scale, guidance_stop_step=guidance_stop_step,
                                       callback=callback, callback_steps=callback_steps, extra_step_kwargs=extra_step_kwargs, num_warmup_steps=num_warmup_steps)
 
@@ -387,7 +389,7 @@ class TextToVideoPipeline(StableDiffusionPipeline):
 
             x_t1 = torch.cat([x_t1_1, x_t1_k], dim=2).clone().detach()
 
-            ddim_res = self.DDIM_backward(num_inference_steps=num_inference_steps, timesteps=timesteps, skip_t=t1, t0=-1, t1=-1, do_classifier_free_guidance=do_classifier_free_guidance,
+            ddim_res,return_latent = self.DDIM_backward(num_inference_steps=num_inference_steps, timesteps=timesteps, skip_t=t1, t0=-1, t1=-1, do_classifier_free_guidance=do_classifier_free_guidance,
                                           null_embs=null_embs, text_embeddings=text_embeddings, latents_local=x_t1, latents_dtype=dtype, guidance_scale=guidance_scale,
                                           guidance_stop_step=guidance_stop_step, callback=callback, callback_steps=callback_steps, extra_step_kwargs=extra_step_kwargs, num_warmup_steps=num_warmup_steps)
 
@@ -415,10 +417,10 @@ class TextToVideoPipeline(StableDiffusionPipeline):
                     z0_f = torch.round(
                         z0_f * 255).cpu().numpy().astype(np.uint8)
                     # apply SOD detection
-                    m_f = torch.tensor(self.sod_model.process_data(
-                        z0_f), device=x0.device).to(x0.dtype)
+                    # m_f = torch.tensor(self.sod_model.process_data(
+                    #     z0_f), device=x0.device).to(x0.dtype)
                     mask = T.Resize(
-                        size=(h, w), interpolation=T.InterpolationMode.NEAREST)(m_f[None])
+                        size=(h, w), interpolation=T.InterpolationMode.NEAREST)(0)# add (m_f[None])
                     kernel = torch.ones(5, 5, device=x0.device, dtype=x0.dtype)
                     mask = dilation(mask[None].to(x0.device), kernel)[0]
                     M_FG[batch_idx, frame_idx, :, :] = mask
@@ -468,8 +470,7 @@ class TextToVideoPipeline(StableDiffusionPipeline):
 
             latents = (1-M_BG) * x_t1 + M_BG * (a_convex *
                                                 x_t1 + (1-a_convex) * x_t1_1_fg_masked_moved)
-
-            ddim_res = self.DDIM_backward(num_inference_steps=num_inference_steps, timesteps=timesteps, skip_t=t1, t0=-1, t1=-1, do_classifier_free_guidance=do_classifier_free_guidance,
+            ddim_res, _ = self.DDIM_backward(num_inference_steps=num_inference_steps, timesteps=timesteps, skip_t=t1, t0=-1, t1=-1, do_classifier_free_guidance=do_classifier_free_guidance,
                                           null_embs=null_embs, text_embeddings=text_embeddings, latents_local=latents, latents_dtype=dtype, guidance_scale=guidance_scale,
                                           guidance_stop_step=guidance_stop_step, callback=callback, callback_steps=callback_steps, extra_step_kwargs=extra_step_kwargs, num_warmup_steps=num_warmup_steps)
             x0 = ddim_res["x0"].detach()
@@ -501,4 +502,4 @@ class TextToVideoPipeline(StableDiffusionPipeline):
         if not return_dict:
             return (image, has_nsfw_concept)
 
-        return TextToVideoPipelineOutput(images=image, nsfw_content_detected=has_nsfw_concept)
+        return TextToVideoPipelineOutput(images=image, nsfw_content_detected=has_nsfw_concept), return_latent

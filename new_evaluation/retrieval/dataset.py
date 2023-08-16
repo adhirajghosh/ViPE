@@ -1,14 +1,14 @@
 from torchvision import transforms
 from torchvision.transforms.functional import InterpolationMode
 from torch.utils.data import Dataset, DataLoader
-from PIL import Image
 import pickle
 import os
 import glob
 import torch
 from torchvision.datasets.utils import download_url
 import json
-from PIL import Image
+from PIL import Image,ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 from randaugment import RandomAugment
 
@@ -78,7 +78,7 @@ class RetrievalDataset(Dataset):
         return image,  caption, index
 
 
-def create_dataset(dataset_dir, id_file, config=None, min_scale=0.5):
+def create_train_dataset(dataset_dir, id_file, config=None, min_scale=0.5):
     normalize = transforms.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711))
 
     transform_train = transforms.Compose([
@@ -90,12 +90,6 @@ def create_dataset(dataset_dir, id_file, config=None, min_scale=0.5):
         transforms.ToTensor(),
         normalize,
     ])
-    transform_test = transforms.Compose([
-        transforms.Resize((config['image_size'],config['image_size']), interpolation=InterpolationMode.BICUBIC),
-        transforms.ToTensor(),
-        normalize,
-    ])
-
 
     train_dir = dataset_dir+ "/image_train/"
     train_split = glob.glob(os.path.join(train_dir, '**', '*.jpg'), recursive=True) + \
@@ -104,6 +98,17 @@ def create_dataset(dataset_dir, id_file, config=None, min_scale=0.5):
 
     train_dataset = RetrievalDataset(id_file, train_split, transform_train)
 
+    return train_dataset
+
+def create_test_dataset(dataset_dir, id_file, config=None, min_scale=0.5):
+    normalize = transforms.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711))
+
+    transform_test = transforms.Compose([
+        transforms.Resize((config['image_size'],config['image_size']), interpolation=InterpolationMode.BICUBIC),
+        transforms.ToTensor(),
+        normalize,
+    ])
+
     test_dir = dataset_dir+ "/image_test/"
     test_split = glob.glob(os.path.join(test_dir, '**', '*.jpg'), recursive=True) + \
                 glob.glob(os.path.join(test_dir, '**', '*.jpeg'), recursive=True) + \
@@ -111,8 +116,7 @@ def create_dataset(dataset_dir, id_file, config=None, min_scale=0.5):
     test_dataset = RetrievalDataset(id_file, test_split, transform_test)
 
 
-    return train_dataset, test_dataset
-
+    return test_dataset
 
 
 def create_loader(datasets, samplers, batch_size, num_workers, is_trains, collate_fns):

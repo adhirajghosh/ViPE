@@ -20,6 +20,7 @@ class ModelType(Enum):
 class Model(nn.Module):
     def __init__(self, device, dtype, **kwargs):
         self.device = device
+        print(self.device)
         self.dtype = dtype
         self.generator = torch.Generator(device=device)
         self.pipe_dict = {
@@ -42,7 +43,7 @@ class Model(nn.Module):
         gc.collect()
         safety_checker = kwargs.pop('safety_checker', None)
         self.pipe = self.pipe_dict[model_type].from_pretrained(
-            model_id, safety_checker=safety_checker, **kwargs).to(self.device).to(self.dtype)
+            model_id).to(self.device)
         self.model_type = model_type
         self.model_name = model_id
 
@@ -65,8 +66,14 @@ class Model(nn.Module):
                          negative_prompt=negative_prompt[frame_ids].tolist(),
                          latents=latents,
                          generator=self.generator,
-                         strength = 0.1,
+                         strength = 0.8,
                          **kwargs)
+        # self.pipe(prompt=prompt[frame_ids].tolist(),
+        #           negative_prompt=negative_prompt[frame_ids].tolist(),
+        #           latents=latents,
+        #           generator=self.generator,
+        #           strength=0.1,
+        #           **kwargs)
 
     def inference(self, split_to_chunks=False, chunk_size=8, **kwargs):
         if not hasattr(self, "pipe") or self.pipe is None:
@@ -103,18 +110,31 @@ class Model(nn.Module):
                 frame_ids = [0] + list(range(ch_start, ch_end))
                 self.generator.manual_seed(seed)
                 print(f'Processing chunk {i + 1} / {len(chunk_ids)}')
-                result.append(self.inference_chunk(frame_ids=frame_ids,
+                if i == len(chunk_ids)-1:
+                    pipe_output, latent_output = self.inference_chunk(frame_ids=frame_ids,
                                                    prompt=prompt,
                                                    negative_prompt=negative_prompt,
-                                                   **kwargs).images[1:])
+                                                   **kwargs)
+                    result.append(pipe_output.images[1:])
+                    latent = latent_output
+                else:
+                    result.append(self.inference_chunk(frame_ids=frame_ids,
+                                                   prompt=prompt,
+                                                   negative_prompt=negative_prompt,
+                                                   **kwargs)[0].images[1:])
+                # self.inference_chunk(frame_ids=frame_ids,
+                #                      prompt=prompt,
+                #                      negative_prompt=negative_prompt,
+                #                      **kwargs)
                 frames_counter += len(chunk_ids)-1
                 if on_huggingspace and frames_counter >= 80:
                     break
             result = np.concatenate(result)
-            return result
+            return result, latent
         else:
             self.generator.manual_seed(seed)
             return self.pipe(prompt=prompt, negative_prompt=negative_prompt, generator=self.generator, strength = 0.05, **kwargs).images
+            # self.pipe(prompt=prompt, negative_prompt=negative_prompt, generator=self.generator, strength = 0.05, **kwargs)
 
     def process_text2video(self,
                            prompt,
@@ -124,7 +144,7 @@ class Model(nn.Module):
                            t0=941,
                            t1=947,
                            n_prompt="",
-                           chunk_size=8,
+                           chunk_size=5,
                            video_length=8,
                            merging_ratio=0.5,
                            seed=0,
@@ -132,8 +152,9 @@ class Model(nn.Module):
                            fps=2,
                            use_cf_attn=True,
                            use_motion_field=True,
-                           smooth_bg=True, #TODO: CHANGE TO TRUE
+                           smooth_bg=False, #TODO: CHANGE TO TRUE
                            smooth_bg_strength=0.4,
+                           frame_index = 0,
                            path=None):
         print("Module Text2Video")
         if self.model_type != ModelType.Text2Video or model_name != self.model_name:
@@ -149,26 +170,17 @@ class Model(nn.Module):
                     processor=self.text2video_attn_proc)
         self.generator.manual_seed(seed)
 
-        added_prompt = "high quality, HD, 32K, trending on artstation, high focus, dramatic lighting, ultra-realistic, DSLR photography"
-        negative_prompts = 'text, worst quality, blurry, morbid, longbody, lowres, bad anatomy, bad hands, missing fingers, extra digit, cropped, low quality, deformed body, bloated, ugly, unrealistic, nude, naked'
+        added_prompt = "perfect face, extreme detail, high quality, HD, 32K, high detailed photography, vivid, vibrant,intricate, perfect face, dramatic lighting, ultra-realistic,trending on artstation"
+        negative_prompts = 'bad anatomy,distorted face, disfiguired, bad hands, missing fingers, nude, naked, text, digits, worst quality, blurry, morbid, poorly drawn face, cropped, deformed body, bloated, ugly, unrealistic'
 
-        prompt = prompt.rstrip()
-        if len(prompt) > 0 and (prompt[-1] == "," or prompt[-1] == "."):
-            prompt = prompt.rstrip()[:-1]
-        prompt = prompt.rstrip()
-        prompt = prompt + ", "+added_prompt
-        if len(n_prompt) > 0:
-            negative_prompt = n_prompt
-        else:
-            negative_prompt = None
 
-        result = self.inference(prompt=prompt,
+        result, latent = self.inference(prompt=prompt,
                                 video_length=video_length,
                                 height=resolution,
                                 negative_prompt=negative_prompts,
                                 width=resolution,
                                 num_inference_steps=50,
-                                guidance_scale=20, #before it was 17.5
+                                guidance_scale=7.5, #before it was 17.5
                                 guidance_stop_step=1.0,
                                 t0=t0,
                                 t1=t1,
@@ -183,4 +195,4 @@ class Model(nn.Module):
                                 split_to_chunks=True,
                                 chunk_size=chunk_size,
                                 )
-        return utils.create_video(result, fps, path=path, watermark=None)
+        return utils.save_images(result, path=path, frame_index=frame_index), latent

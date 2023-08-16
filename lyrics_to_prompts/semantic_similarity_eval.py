@@ -7,6 +7,7 @@ import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 import evaluate
+import pickle
 
 
 # from evaluate import load
@@ -89,12 +90,15 @@ def collate_fn(batch):
 
 def get_mpnet_embed_batch(predictions, ground_truth, batch_size=10000):
     # Convert the dictionaries to lists of captions
-    sentences_1 = [item['caption'] for item in predictions]
-    sentences_2 = [item['caption'] for item in ground_truth['annotations']]
+    # sentences_1 = [item['caption'] for item in predictions]
+    # sentences_2 = [item['caption'] for item in ground_truth['annotations']]
     #
     # sentences_1=predictions
     # sentences_2=ground_truth
     # Create data loaders
+
+    sentences_1 = predictions
+    sentences_2 = ground_truth
     dataset_1 = SentenceDataset(sentences_1)
     dataset_2 = SentenceDataset(sentences_2)
 
@@ -159,15 +163,15 @@ model_name='gpt2_context_ctx_0_lr_5e-05-v4'
 model_name='gpt2_context_ctx_7_lr_5e-05-v4'
 
 
-GT = '{}ground_truth.json'.format(saving_dir)
-pred='{}generation_{}.ckpt_.json'.format(saving_dir,model_name)
-
-
-with open(pred, 'r') as file:
-    predictions=json.load(file)
-
-with open(GT, 'r') as file:
-    ground_truth=json.load(file)
+# GT = '{}ground_truth.json'.format(saving_dir)
+# pred='{}generation_{}.ckpt_.json'.format(saving_dir,model_name)
+#
+#
+# with open(pred, 'r') as file:
+#     predictions=json.load(file)
+#
+# with open(GT, 'r') as file:
+#     ground_truth=json.load(file)
 
 
 #_________________
@@ -194,17 +198,37 @@ with open(GT, 'r') as file:
 # 0  out of  1
 # tensor(0.7336, device='cuda:0')
 
-average_similarity =  get_mpnet_embed_batch(predictions, ground_truth, batch_size=512)
+with open('./datasets/retrieval/prompt_dict_chatgpt.pickle', 'rb') as handle1:
+    chatgpt_id = pickle.load(handle1)
+with open('./datasets/retrieval/prompt_dict_haivmet.pickle', 'rb') as handle2:
+    haivmet_id = pickle.load(handle2)
+with open('./datasets/retrieval/prompt_dict_vipe.pickle', 'rb') as handle3:
+    vipe_id = pickle.load(handle3)
 
-print(f"Average Cosine Similarity: {average_similarity.item():.4f}")
-jsonString = json.dumps(f"Average Cosine Similarity: {average_similarity.item():.4f}")
-if nli:
-    jsonFile = open(saving_dir + "nli_mpnet_score_{}.json".format(model_name), "w")
-else:
-    jsonFile = open(saving_dir + "mpnet_score_{}.json".format(model_name), "w")
+for i in range(3):
+    if i ==0:
+        dataset = 'haivmet'
+        corpus = haivmet_id
+    elif i == 1:
+        dataset = 'chatgpt'
+        corpus = chatgpt_id
+    elif i == 2:
+        dataset = 'vipe'
+        corpus = vipe_id
 
-jsonFile.write(jsonString)
-jsonFile.close()
+    ground_truth = [k for k, _ in corpus.items()]
+    predictions = [w for _,(v,w )in corpus.items()]
+    average_similarity =  get_mpnet_embed_batch(predictions, ground_truth, batch_size=512)
+    print(dataset)
+    print(f"Average Cosine Similarity: {average_similarity.item():.4f}")
+    # jsonString = json.dumps(f"Average Cosine Similarity: {average_similarity.item():.4f}")
+    # if nli:
+    #     jsonFile = open(saving_dir + "nli_mpnet_score_{}_{}.json".format(dataset,model_name), "w")
+    # else:
+    #     jsonFile = open(saving_dir + "mpnet_score_{}_{}.json".format(dataset, model_name), "w")
+    #
+    # jsonFile.write(jsonString)
+    # jsonFile.close()
 
 #___________________
 # evaluation_result=calculate_bert_score(predictions,ground_truth)

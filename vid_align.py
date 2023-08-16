@@ -36,7 +36,7 @@ def parse_args():
     parser.add_argument("--img_size", type=int, default=1024)
     parser.add_argument("--warmup_steps", type=int, default=1e3)
     parser.add_argument("--batch_size", type=int, default=30)
-    parser.add_argument("--context_length", type=int, default=5, help='number of previous lines from lyrics as the context')
+    parser.add_argument("--context_length", type=int, default=3, help='number of previous lines from lyrics as the context')
     parser.add_argument("--learning_rate", type=float, default=5e-5)
     parser.add_argument('--chunk', help='chunk interpolation. Type --chunk or --no-chunk', default=False,action=argparse.BooleanOptionalAction)
     parser.add_argument("--fps", type=float, default=10)
@@ -154,6 +154,7 @@ def main():
         device1 = f"cuda:{args.device[1]}"
     else:
         device = f"cuda:{args.device}"
+
     print(device)
     #Download the song
     if not os.path.exists(os.path.join(args.songdir,args.song_name)):
@@ -198,13 +199,7 @@ def main():
     #     hparams.device = device
     # hparams.warmup_steps = args.warmup_steps
     #
-    # # Model initialisation and checkpoint loading
-    # # model = GPT2Convertor(hparams)
-    # # check_point_name = '{}_context_ctx_{}_lr_{}-v2.ckpt'.format(model_name, context_length, args.learning_rate)
-    # # print(check_path+check_point_name)
-    # # checkpoint = torch.load(check_path + check_point_name, map_location=lambda storage, loc: storage)
-    # # model.load_state_dict(checkpoint['state_dict'])
-    # # print('checkpoint loaded')
+
     #
     # model = GPT2LMHeadModel.from_pretrained(args.checkpoint)
     # model.to(device)
