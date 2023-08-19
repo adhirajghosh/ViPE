@@ -1,13 +1,10 @@
 import argparse
 import fire
-import sys
 import numpy as np
-import os
 from transformers import pipeline
 from utils import *
-from vid import create_video, create_video2
+from t2v.vid import create_video
 from logger import Logger
-from statistics import mean
 
 
 def parse_args():

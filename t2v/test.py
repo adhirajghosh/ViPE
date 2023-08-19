@@ -1,8 +1,4 @@
-from diffusers import (
-    StableDiffusionPipeline)
-import numpy as np
-import os
-from vid import *
+from t2v.vid import *
 
 def img2emb(pipe, image, seed, device):
     # transform = transforms.Compose([

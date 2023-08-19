@@ -2,7 +2,7 @@ import os
 import inspect
 import fire
 from diffusers import StableDiffusionPipeline
-from diffusers.schedulers import DDIMScheduler, LMSDiscreteScheduler, PNDMScheduler
+from diffusers.schedulers import DDIMScheduler, LMSDiscreteScheduler, PNDMScheduler, DPMSolverMultistepScheduler
 from time import time
 from PIL import Image
 from einops import rearrange
@@ -44,7 +44,7 @@ def diffuse(
         cond_latents = cond_latents.to(device=torch_device)
 
     # if we use LMSDiscreteScheduler, let's make sure latents are mulitplied by sigmas
-    if isinstance(pipe.scheduler, LMSDiscreteScheduler):
+    if isinstance(pipe.scheduler, LMSDiscreteScheduler) or isinstance(pipe.scheduler, DPMSolverMultistepScheduler):
         cond_latents = cond_latents * pipe.scheduler.sigmas[0]
 
     # init the scheduler
@@ -63,7 +63,7 @@ def diffuse(
     for i, t in enumerate(pipe.scheduler.timesteps):
 
         latent_model_input = torch.cat([cond_latents] * 2)
-        if isinstance(pipe.scheduler, LMSDiscreteScheduler):
+        if isinstance(pipe.scheduler, LMSDiscreteScheduler) or isinstance(pipe.scheduler, DPMSolverMultistepScheduler):
             sigma = pipe.scheduler.sigmas[i]
             latent_model_input = latent_model_input / ((sigma ** 2 + 1) ** 0.5)
 
@@ -74,8 +74,8 @@ def diffuse(
         noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
         noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
 
-        if isinstance(pipe.scheduler, LMSDiscreteScheduler):
-            cond_latents = pipe.scheduler.step(noise_pred, i, cond_latents, **extra_step_kwargs)["prev_sample"]
+        if isinstance(pipe.scheduler, LMSDiscreteScheduler) or isinstance(pipe.scheduler, DPMSolverMultistepScheduler):
+            cond_latents = pipe.scheduler.step(noise_pred, i+1, cond_latents, **extra_step_kwargs)["prev_sample"]
         else:
             cond_latents = pipe.scheduler.step(noise_pred, t, cond_latents, **extra_step_kwargs)["prev_sample"]
 
@@ -99,6 +99,83 @@ def diffuse(
 
 
     return image
+
+def diffuse2(
+        pipe,
+        cond_embeddings,  # text conditioning, should be (1, 77, 768)
+        cond_latents,  # image conditioning, should be (1, 4, 64, 64)
+        uncond_embed,
+        num_inference_steps,
+        guidance_scale,
+        eta,
+        timestep=1,
+        flag=1,
+):
+    torch_device = cond_latents.get_device()
+
+    # classifier guidance: add the unconditional embedding
+
+    text_embeddings = torch.cat([uncond_embed, cond_embeddings])
+
+    if isinstance(cond_latents, (torch.Tensor, Image.Image, list)):
+        cond_latents = cond_latents.to(device=torch_device)
+
+    # if we use LMSDiscreteScheduler, let's make sure latents are mulitplied by sigmas
+    if isinstance(pipe.scheduler, LMSDiscreteScheduler) or isinstance(pipe.scheduler, DPMSolverMultistepScheduler):
+        cond_latents = cond_latents * pipe.scheduler.sigmas[0]
+
+    # init the scheduler
+    accepts_offset = "offset" in set(inspect.signature(pipe.scheduler.set_timesteps).parameters.keys())
+    extra_set_kwargs = {}
+    if accepts_offset:
+        extra_set_kwargs["offset"] = 1
+    pipe.scheduler.set_timesteps(num_inference_steps, **extra_set_kwargs)
+
+    accepts_eta = "eta" in set(inspect.signature(pipe.scheduler.step).parameters.keys())
+    extra_step_kwargs = {}
+    if accepts_eta:
+        extra_step_kwargs["eta"] = eta
+
+    # diffuse!
+    for i, t in enumerate(pipe.scheduler.timesteps):
+
+        latent_model_input = torch.cat([cond_latents] * 2)
+        if isinstance(pipe.scheduler, LMSDiscreteScheduler) or isinstance(pipe.scheduler, DPMSolverMultistepScheduler):
+            sigma = pipe.scheduler.sigmas[i]
+            latent_model_input = latent_model_input / ((sigma ** 2 + 1) ** 0.5)
+
+        # predict the noise residual
+        noise_pred = pipe.unet(latent_model_input, t, encoder_hidden_states=text_embeddings)["sample"]
+
+        # cfg
+        noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
+        noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
+
+        if isinstance(pipe.scheduler, LMSDiscreteScheduler) or isinstance(pipe.scheduler, DPMSolverMultistepScheduler):
+            cond_latents = pipe.scheduler.step(noise_pred, i, cond_latents, **extra_step_kwargs)["prev_sample"]
+        else:
+            cond_latents = pipe.scheduler.step(noise_pred, t, cond_latents, **extra_step_kwargs)["prev_sample"]
+
+    # scale and decode the image latents with vae.  TODO: See if we need this latent before or after multiplication
+    cond_latents = 1 / 0.18215 * cond_latents
+    image = pipe.vae.decode(cond_latents)
+
+    # generate output numpy image as uint8
+    image = (image['sample']/ 2 + 0.5).clamp(0, 1)
+    image = image.cpu().permute(0, 2, 3, 1).float().numpy()
+    # image = image.cpu().numpy()
+    #
+    # image = (image[0] * 255).round().astype('uint8')
+
+    if flag == 0:
+        image = (image[0] * 255 * timestep).astype(np.uint8)
+    elif flag == 1:
+        image = (image[0] * 255).astype(np.uint8)
+    elif flag == -1:
+        image = (image[0] * 255 * (1-timestep)).astype(np.uint8)
+
+
+    return image, cond_latents
 
 def slerp(t, v0, v1, DOT_THRESHOLD=0.9995):
     """ helper function to spherically interpolate two arrays v1 v2 """

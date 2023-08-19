@@ -1,27 +1,8 @@
-import torch
-from model import Model
 import argparse
-import fire
-import os
-import fire
-import numpy as np
-import argparse
-import whisper
-import torch
-import ffmpeg
-import json
 import ast
-from PIL import Image
-import time
 import math
-import torchvision.transforms as transforms
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
-from diffusers import (
-    StableDiffusionImg2ImgPipeline,
-    StableDiffusionPipeline,
-    DPMSolverMultistepScheduler)
 # from music_video_generation.modeling import GPT2Convertor
-from vid import *
+from t2v.vid import *
 from utils import *
 
 

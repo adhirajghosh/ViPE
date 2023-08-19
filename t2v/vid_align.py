@@ -267,7 +267,7 @@ def main():
     #     output.write(str(whispers_save))
 
 
-    with open('./timestamps/thunder.txt') as f:
+    with open('../timestamps/thunder.txt') as f:
         data = f.read()
 
         # reconstructing the data as a dictionary
