@@ -55,8 +55,8 @@ def zip_process(file):
     return folder_dict
 
 def generate_images(pipe, prompt_dict, ds_id, saving_path, batch_size, size, gpu):
-    added_prompt = "high quality, HD, 32K, high focus, dramatic lighting, ultra-realistic, high detailed photography, vivid, vibrant,intricate,trending on artstation"
-    negative_prompt = 'nude, naked, text, digits, worst quality, blurry, morbid, poorly drawn face, bad anatomy,distorted face, disfiguired, bad hands, missing fingers,cropped, deformed body, bloated, ugly, unrealistic'
+    # added_prompt = "high quality, HD, 32K, high focus, dramatic lighting, ultra-realistic, high detailed photography, vivid, vibrant,intricate,trending on artstation"
+    # negative_prompt = 'nude, naked, text, digits, worst quality, blurry, morbid, poorly drawn face, bad anatomy,distorted face, disfiguired, bad hands, missing fingers,cropped, deformed body, bloated, ugly, unrealistic'
     for i in range(4):
 
         generator = torch.Generator(gpu).manual_seed(i)
@@ -64,7 +64,8 @@ def generate_images(pipe, prompt_dict, ds_id, saving_path, batch_size, size, gpu
         ids = []
         for num, (p_id, prompt) in enumerate(prompt_dict.items()):
             if not os.path.isfile("{}/{}_{}_{}.png".format(saving_path, str(ds_id), p_id, str(i+1))):
-                batch.append(prompt+added_prompt)
+                # batch.append(prompt+added_prompt)
+                batch.append(prompt)
                 ids.append(p_id)
                 if len(batch) < batch_size and (num + 1) < len(prompt_dict):
                     continue

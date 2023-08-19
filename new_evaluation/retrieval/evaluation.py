@@ -226,9 +226,9 @@ def itm_eval(scores_i2t, scores_t2i, txt2img, img2txt):
 
 def main(args, config):
     if 'LOCAL_RANK' not in os.environ:
-        os.environ['LOCAL_RANK'] = '0'
+        os.environ['LOCAL_RANK'] = '1'
     if 'WORLD_SIZE' not in os.environ:
-        os.environ['WORLD_SIZE'] = '1'
+        os.environ['WORLD_SIZE'] = '2'
     #
     utils.init_distributed_mode(args)
 
@@ -357,14 +357,14 @@ if __name__ == '__main__':
     parser.add_argument('--data_dir', default='/graphics/scratch2/students/ghoshadh/SongAnimator/datasets/retrieval/')
     parser.add_argument('--dataset', default='haivmet')
     parser.add_argument('--id_type', default='metaphor', help='prompt or metaphor')
-    parser.add_argument('--output_dir', default='output/new/haivmet_train_lr1e-4/')
-    parser.add_argument('--evaluate', default=False, type=bool)
+    parser.add_argument('--output_dir', default='output/finalise/haivmet_zs_metaphor/')
+    parser.add_argument('--evaluate', default=True, type=bool)
     parser.add_argument('--device', default='cuda')
-    parser.add_argument('--gpu', default='0,1')
+    parser.add_argument('--gpu', default='1')
     parser.add_argument('--seed', default=42, type=int)
-    parser.add_argument('--world_size', default=1, type=int, help='number of distributed processes')
+    parser.add_argument('--world_size', default=2, type=int, help='number of distributed processes')
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
-    parser.add_argument('--distributed', default=True, type=bool)
+    parser.add_argument('--distributed', default=False, type=bool)
     args = parser.parse_args()
 
     config = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)

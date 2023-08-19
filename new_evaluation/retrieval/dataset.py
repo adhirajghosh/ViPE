@@ -14,6 +14,7 @@ from randaugment import RandomAugment
 
 class RetrievalDataset(Dataset):
     def __init__(self, id_file, dataset, transform=None):
+        print(id_file)
         with open(id_file, 'rb') as handle:
             caption_ids = pickle.load(handle)
         self.id_file = id_file
@@ -110,6 +111,7 @@ def create_test_dataset(dataset_dir, id_file, config=None, min_scale=0.5):
     ])
 
     test_dir = dataset_dir+ "/image_test/"
+    print(test_dir)
     test_split = glob.glob(os.path.join(test_dir, '**', '*.jpg'), recursive=True) + \
                 glob.glob(os.path.join(test_dir, '**', '*.jpeg'), recursive=True) + \
                 glob.glob(os.path.join(test_dir, '**', '*.png'), recursive=True)

@@ -27,9 +27,10 @@ def parse_args():
 
     parser.add_argument('--datadir', help='where are the datasets stored?', type=str, default='/graphics/scratch2/staff/Hassan/datasets/HAIVMet/')
     parser.add_argument('--dataset', help='Name of dataset', type=str, default='flute')
-    # parser.add_argument('--model', help='which model to use', type=str, default='haivmet')
+    parser.add_argument('--model', help='which model to use', type=str, default='haivmet')
+
     parser.add_argument('--checkpoint', help='path to the GPT to use', type=str, default='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/saved_models_mine/gpt2-medium_context_ctx_7_lr_5e-05-v4.ckpt/')
-    parser.add_argument('--savedir', help='where to save the dataset', type=str, default='/graphics/scratch2/students/ghoshadh/SongAnimator/datasets/retrieval/')
+    parser.add_argument('--savedir', help='where to save the dataset', type=str, default='/graphics/scratch2/students/ghoshadh/SongAnimator/datasets/retrieval2/')
     parser.add_argument("--img_size", type=int, default=400)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument('--sample', help='Sampling or no', type=bool, default=False)
@@ -73,13 +74,13 @@ def main():
     list2 = ['bizzoni', 'copoet', 'figqa', 'tsvetkov']
     list3 = ['tsvetkov']
 
-    with open('./datasets/retrieval/chatgpt_metaphor_id.pickle', 'rb') as handle:
+    with open('./datasets/retrieval/metaphor_id.pickle', 'rb') as handle:
         chatgpt_id = pickle.load(handle)
 
 
     device = 'cuda:1'
     pipe = StableDiffusionPipeline.from_pretrained(model_id).to(device)
-    for i in list3:
+    for i in list1:
         # print("The dataset being used is ", args.dataset)
         print("The dataset being used is ", i)
         # folder_dict = zip_process(os.path.join(args.datadir, args.dataset+'.zip'))
@@ -152,6 +153,21 @@ def main():
         if not os.path.exists(chatgpt_path):
             os.makedirs(chatgpt_path)
         generate_images(pipe, prompt_dict_ours, ds_id, chatgpt_path, batch_size, args.img_size, device)
+
+        if args.model == 'haivmet':
+            id_file = args.savedir+'prompt_dict_haivmet2.pickle'
+        elif args.model == 'vipe':
+            id_file = args.savedir + 'prompt_dict_vipe.pickle'
+        else:
+            id_file = args.savedir + 'prompt_dict_chatgpt.pickle'
+
+        with open(id_file, 'rb') as handle:
+            prompt_dict = pickle.load(handle)
+
+        image_path = os.path.join(args.savedir, 'vipe')
+        # if not os.path.exists(ours_path):
+        #     os.makedirs(ours_path)
+        # generate_images(pipe, prompt_dict_ours, ds_id, ours_path, batch_size, args.img_size, device)
 
 if __name__ == '__main__':
     main()
