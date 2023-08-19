@@ -30,6 +30,7 @@ TODO:
 1. Correct all the links. 
 2. Add Video generation website 
 3. Add HuggingFace page if available
+4. Refactor chatgpt, chatgpt_run and genius to one folder called lyric_canvas?
  
  -----------------
 ## 🦾 Updates
