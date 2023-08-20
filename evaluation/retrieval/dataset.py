@@ -110,7 +110,7 @@ def create_test_dataset(dataset_dir, id_file, config=None, min_scale=0.5):
         normalize,
     ])
 
-    test_dir = dataset_dir+ "/image_test2/"
+    test_dir = dataset_dir+ "/image_test/"
     print(test_dir)
     test_split = glob.glob(os.path.join(test_dir, '**', '*.jpg'), recursive=True) + \
                 glob.glob(os.path.join(test_dir, '**', '*.jpeg'), recursive=True) + \

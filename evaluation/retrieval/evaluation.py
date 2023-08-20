@@ -277,9 +277,6 @@ def main(args, config):
 
     print("Doing DDP", sum(p.numel() for p in model.parameters()))
     model_without_ddp = model
-    if args.distributed:
-        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
-        model_without_ddp = model.module
 
     optimizer = torch.optim.AdamW(params=model.parameters(), lr=1e-4, weight_decay=0.05)
 
@@ -343,13 +340,12 @@ if __name__ == '__main__':
     # torch.multiprocessing.set_start_method('spawn')
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', default='./evaluation/retrieval/configs/config_base.yml')
-    parser.add_argument('--data_dir', default='/graphics/scratch2/students/ghoshadh/SongAnimator/datasets/retrieval/')
+    parser.add_argument('--data_dir', default='./datasets/retrieval/')
     parser.add_argument('--dataset', default='haivmet')
     parser.add_argument('--id_type', default='metaphor', help='prompt or metaphor')
     parser.add_argument('--output_dir', default='output/finalise/haivmet_zs_metaphor/')
     parser.add_argument('--evaluate', default=True, type=bool)
     parser.add_argument('--device', default='cuda')
-    parser.add_argument('--gpu', default='1')
     parser.add_argument('--seed', default=42, type=int)
     parser.add_argument('--world_size', default=2, type=int, help='number of distributed processes')
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
@@ -363,5 +359,3 @@ if __name__ == '__main__':
     yaml.dump(config, open(os.path.join(args.output_dir, 'config.yaml'), 'w'))
 
     main(args, config)
-
-
