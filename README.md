@@ -42,9 +42,7 @@ TODO:
 │   ├── chatgpt-run                   <- build your own LLM-powered dataset
 │   ├── datasets                      <- path to all relevant datasets to reproduce ViPE results
 │   ├── genius                        <- implement the genius API
-│   │── utils                         <- util functions
 │   │── README.md                    
-│   │── scripts                       <- bash scripts for data generation + preprocesing + training
 │   └── output                        <- folder that stores models and logs
 │
 ```
