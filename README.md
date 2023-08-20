@@ -76,9 +76,16 @@ The ```datasets``` folder should have the following structure
 │   │   │── prompt_dict_vipe.pickle  
 ```
 
-## Evaluation 
-
+## Evaluation
 ### Image-Text Retrieval
+To generate datasets for the respective models, run the following:
+```bash
+python3 evaluation/retrieval/create_dataset.py --model <haivmet/vipe/chatgpt> \
+--dataset <ad_slogans/bizzoni/copoet/figqa/flute/tsvetkov>\
+--savedir <path/to/store/datasets/>\
+--img_size <image resolution> --num_images <number of images per prompt>\
+--checkpoint <path/to/vipe/checkpoint/if/using/vipe>
+```
 We conduct vigorous image-text retrieval using the [BLIP model](https://github.com/salesforce/BLIP) as the benchmark model. 
 ```bash
 python3 evaluation/retrieval/evaluation.py --dataset <haivmet/vipe/chatgpt> --output_dir <path/to/store/checkpoints> --id_type <metaphor/prompt>

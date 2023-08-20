@@ -33,7 +33,6 @@ def parse_args():
     parser.add_argument("--num_images", type=int, default=4)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument('--device', help='which gpu to use', type=str, default='cuda')
-    parser.add_argument('--pkl', help='Create pickle file?', type=bool, default=True)
     parser.add_argument('--sd_model', help='which Stable Diffusion Checkpoint to use', type=str, default='dreamlike-art/dreamlike-photoreal-2.0')
     parser.add_argument('--checkpoint', help='which ViPE Checkpoint to use', type=str, default='./models/vipe/')
     parser.add_argument('--sample', help='Sampling or no', type=bool, default=False)
