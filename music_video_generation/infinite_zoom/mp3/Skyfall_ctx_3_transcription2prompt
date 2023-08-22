@@ -1,0 +1,889 @@
+[
+      {
+            "start": 0.0,
+            "end": 30.0,
+            "text": [
+                  "music, fantasy, exciting, colorful"
+            ],
+            "prompt": [
+                  " A concert stage with bright lights and a live band, crowds cheering and singing along"
+            ]
+      },
+      {
+            "id": 0,
+            "seek": 3000,
+            "start": 30.0,
+            "end": 45.0,
+            "text": " This is the end Hold your breath and count to ten",
+            "tokens": [
+                  50364,
+                  639,
+                  307,
+                  264,
+                  917,
+                  6962,
+                  428,
+                  6045,
+                  293,
+                  1207,
+                  281,
+                  2064,
+                  51114
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.4897301197052002,
+            "compression_ratio": 1.223529411764706,
+            "no_speech_prob": 0.8148467540740967,
+            "prompt": [
+                  " A person holding their breath with their hands, standing on the edge of a cliff with waves crashing below"
+            ]
+      },
+      {
+            "id": 1,
+            "seek": 3000,
+            "start": 45.0,
+            "end": 59.0,
+            "text": " Feel the earth move and then Hear my heart burst again",
+            "tokens": [
+                  51114,
+                  14113,
+                  264,
+                  4120,
+                  1286,
+                  293,
+                  550,
+                  30685,
+                  452,
+                  1917,
+                  12712,
+                  797,
+                  51814
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.4897301197052002,
+            "compression_ratio": 1.223529411764706,
+            "no_speech_prob": 0.8148467540740967,
+            "prompt": [
+                  " A roller coaster reaching its highest point before plummeting at full speed down the track"
+            ]
+      },
+      {
+            "id": 2,
+            "seek": 5900,
+            "start": 59.0,
+            "end": 70.0,
+            "text": " Lord, this is the end I've drowned and dreamt this moment",
+            "tokens": [
+                  50364,
+                  3257,
+                  11,
+                  341,
+                  307,
+                  264,
+                  917,
+                  286,
+                  600,
+                  38233,
+                  293,
+                  3055,
+                  83,
+                  341,
+                  1623,
+                  50914
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.2380627223423549,
+            "compression_ratio": 1.1666666666666667,
+            "no_speech_prob": 0.02725476585328579,
+            "prompt": [
+                  " A man is drowning in the ocean, and then sees a vision of a ghostly figure that he can hear amidst the waves"
+            ]
+      },
+      {
+            "id": 3,
+            "seek": 5900,
+            "start": 70.0,
+            "end": 84.0,
+            "text": " So overdue, I owe a debt Swept away, I'm stolen",
+            "tokens": [
+                  50914,
+                  407,
+                  19853,
+                  622,
+                  11,
+                  286,
+                  16655,
+                  257,
+                  7831,
+                  3926,
+                  5250,
+                  1314,
+                  11,
+                  286,
+                  478,
+                  15900,
+                  51614
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.2380627223423549,
+            "compression_ratio": 1.1666666666666667,
+            "no_speech_prob": 0.02725476585328579,
+            "prompt": [
+                  " A person drowning in debt, surrounded by debts and regrets, as if time has crossed away, the weight of the world on one's shoulders"
+            ]
+      },
+      {
+            "id": 4,
+            "seek": 8400,
+            "start": 84.0,
+            "end": 90.0,
+            "text": " Let the sky fall When it crumbles",
+            "tokens": [
+                  50364,
+                  961,
+                  264,
+                  5443,
+                  2100,
+                  1133,
+                  309,
+                  941,
+                  12255,
+                  50664
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.2108100600864576,
+            "compression_ratio": 1.9875,
+            "no_speech_prob": 0.1097143366932869,
+            "prompt": [
+                  " A lost hiker standing at the edge of a cliff, surrounded by an endless mountain range as the sky slowly fades"
+            ]
+      },
+      {
+            "id": 5,
+            "seek": 8400,
+            "start": 90.0,
+            "end": 97.0,
+            "text": " We will stand tall We'll face it all together",
+            "tokens": [
+                  50664,
+                  492,
+                  486,
+                  1463,
+                  6764,
+                  492,
+                  603,
+                  1851,
+                  309,
+                  439,
+                  1214,
+                  51014
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.2108100600864576,
+            "compression_ratio": 1.9875,
+            "no_speech_prob": 0.1097143366932869,
+            "prompt": [
+                  " A man standing at the edge of a cliff, overlooking a destroyed city, ready to face the future together with his partner"
+            ]
+      },
+      {
+            "id": 6,
+            "seek": 8400,
+            "start": 97.0,
+            "end": 103.0,
+            "text": " Let the sky fall When it crumbles",
+            "tokens": [
+                  51014,
+                  961,
+                  264,
+                  5443,
+                  2100,
+                  1133,
+                  309,
+                  941,
+                  12255,
+                  51314
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.2108100600864576,
+            "compression_ratio": 1.9875,
+            "no_speech_prob": 0.1097143366932869,
+            "prompt": [
+                  " A group of five friends standing side by side, as the sky falls and they stand tall as it crumbles around them"
+            ]
+      },
+      {
+            "id": 7,
+            "seek": 8400,
+            "start": 103.0,
+            "end": 109.0,
+            "text": " We will stand tall We'll face it all together",
+            "tokens": [
+                  51314,
+                  492,
+                  486,
+                  1463,
+                  6764,
+                  492,
+                  603,
+                  1851,
+                  309,
+                  439,
+                  1214,
+                  51614
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.2108100600864576,
+            "compression_ratio": 1.9875,
+            "no_speech_prob": 0.1097143366932869,
+            "prompt": [
+                  " Two warriors in the midst of a battlefield, holding each other tightly, ready to face any challenge together"
+            ]
+      },
+      {
+            "id": 8,
+            "seek": 10900,
+            "start": 109.0,
+            "end": 122.0,
+            "text": " Let the sky fall Let the sky fall",
+            "tokens": [
+                  50364,
+                  961,
+                  264,
+                  5443,
+                  2100,
+                  961,
+                  264,
+                  5443,
+                  2100,
+                  51014
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.20264711746802697,
+            "compression_ratio": 1.2432432432432432,
+            "no_speech_prob": 0.021613571792840958,
+            "prompt": [
+                  " Two soldiers holding hands as they face a shattered sky, determined to fight"
+            ]
+      },
+      {
+            "id": 9,
+            "seek": 10900,
+            "start": 122.0,
+            "end": 134.0,
+            "text": " Skyfall is where we start A thousand miles and poles apart",
+            "tokens": [
+                  51014,
+                  9879,
+                  6691,
+                  307,
+                  689,
+                  321,
+                  722,
+                  316,
+                  4714,
+                  6193,
+                  293,
+                  24760,
+                  4936,
+                  51614
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.20264711746802697,
+            "compression_ratio": 1.2432432432432432,
+            "no_speech_prob": 0.021613571792840958,
+            "prompt": [
+                  " An astronaut on a never-ending journey, viewing the earth from outer space, feeling homesick"
+            ]
+      },
+      {
+            "id": 10,
+            "seek": 13400,
+            "start": 134.0,
+            "end": 140.0,
+            "text": " Where worlds collide and days are dark You may have my number",
+            "tokens": [
+                  50364,
+                  2305,
+                  13401,
+                  49093,
+                  293,
+                  1708,
+                  366,
+                  2877,
+                  509,
+                  815,
+                  362,
+                  452,
+                  1230,
+                  50664
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.16846304673414964,
+            "compression_ratio": 1.4191176470588236,
+            "no_speech_prob": 0.21485643088817596,
+            "prompt": [
+                  " Two astronauts gazing through their spaceship's window, lost in the vast and endless cosmos"
+            ]
+      },
+      {
+            "id": 11,
+            "seek": 13400,
+            "start": 140.0,
+            "end": 148.0,
+            "text": " You can take my name But you'll never have my heart",
+            "tokens": [
+                  50664,
+                  509,
+                  393,
+                  747,
+                  452,
+                  1315,
+                  583,
+                  291,
+                  603,
+                  1128,
+                  362,
+                  452,
+                  1917,
+                  51064
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.16846304673414964,
+            "compression_ratio": 1.4191176470588236,
+            "no_speech_prob": 0.21485643088817596,
+            "prompt": [
+                  " A shooting star across the horizon, a person making a request for their heart's name, only to be rejected"
+            ]
+      },
+      {
+            "id": 12,
+            "seek": 13400,
+            "start": 148.0,
+            "end": 154.0,
+            "text": " Let the sky fall When it crumbles",
+            "tokens": [
+                  51064,
+                  961,
+                  264,
+                  5443,
+                  2100,
+                  1133,
+                  309,
+                  941,
+                  12255,
+                  51364
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.16846304673414964,
+            "compression_ratio": 1.4191176470588236,
+            "no_speech_prob": 0.21485643088817596,
+            "prompt": [
+                  " A person standing in a desolate landscape, looking up at the sky, ready to let go"
+            ]
+      },
+      {
+            "id": 13,
+            "seek": 13400,
+            "start": 154.0,
+            "end": 161.0,
+            "text": " We will stand tall We'll face it all together",
+            "tokens": [
+                  51364,
+                  492,
+                  486,
+                  1463,
+                  6764,
+                  492,
+                  603,
+                  1851,
+                  309,
+                  439,
+                  1214,
+                  51714
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.16846304673414964,
+            "compression_ratio": 1.4191176470588236,
+            "no_speech_prob": 0.21485643088817596,
+            "prompt": [
+                  " A couple with hands made of stars holding on to each other, standing tall amidst a raging storm of lightning"
+            ]
+      },
+      {
+            "id": 14,
+            "seek": 16100,
+            "start": 161.0,
+            "end": 167.0,
+            "text": " Let the sky fall When it crumbles",
+            "tokens": [
+                  50364,
+                  961,
+                  264,
+                  5443,
+                  2100,
+                  1133,
+                  309,
+                  941,
+                  12255,
+                  50664
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.19614487886428833,
+            "compression_ratio": 1.65,
+            "no_speech_prob": 0.37909623980522156,
+            "prompt": [
+                  " A group of warriors standing tall, ready for battle, as a dark storm cloud approaches"
+            ]
+      },
+      {
+            "id": 15,
+            "seek": 16100,
+            "start": 167.0,
+            "end": 173.0,
+            "text": " We will stand tall We'll face it all together",
+            "tokens": [
+                  50664,
+                  492,
+                  486,
+                  1463,
+                  6764,
+                  492,
+                  603,
+                  1851,
+                  309,
+                  439,
+                  1214,
+                  50964
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.19614487886428833,
+            "compression_ratio": 1.65,
+            "no_speech_prob": 0.37909623980522156,
+            "prompt": [
+                  " A couple holding hands standing in front of a crumbling building, unbreakable in their unity"
+            ]
+      },
+      {
+            "id": 16,
+            "seek": 16100,
+            "start": 173.0,
+            "end": 182.0,
+            "text": " Let the sky fall When it crumbles",
+            "tokens": [
+                  50964,
+                  961,
+                  264,
+                  5443,
+                  2100,
+                  1133,
+                  309,
+                  941,
+                  12255,
+                  51414
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.19614487886428833,
+            "compression_ratio": 1.65,
+            "no_speech_prob": 0.37909623980522156,
+            "prompt": [
+                  " A group of soldiers standing tall in the midst of a ruined battle, determined to face whatever is coming their way"
+            ]
+      },
+      {
+            "id": 17,
+            "seek": 16100,
+            "start": 182.0,
+            "end": 188.0,
+            "text": " We will stand tall",
+            "tokens": [
+                  51414,
+                  492,
+                  486,
+                  1463,
+                  6764,
+                  51714
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.19614487886428833,
+            "compression_ratio": 1.65,
+            "no_speech_prob": 0.37909623980522156,
+            "prompt": [
+                  " An army standing tall during a time of crisis, watching the sky fall with stoic determination"
+            ]
+      },
+      {
+            "id": 18,
+            "seek": 18800,
+            "start": 188.0,
+            "end": 194.0,
+            "text": " Let the sky fall When it crumbles",
+            "tokens": [
+                  50364,
+                  961,
+                  264,
+                  5443,
+                  2100,
+                  1133,
+                  309,
+                  941,
+                  12255,
+                  50664
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.1802896885644822,
+            "compression_ratio": 1.3137254901960784,
+            "no_speech_prob": 0.11289868503808975,
+            "prompt": [
+                  " A choir of angels standing tall in a stormy sky, ready to face it together"
+            ]
+      },
+      {
+            "id": 19,
+            "seek": 18800,
+            "start": 194.0,
+            "end": 198.0,
+            "text": " We will stand tall",
+            "tokens": [
+                  50664,
+                  492,
+                  486,
+                  1463,
+                  6764,
+                  50864
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.1802896885644822,
+            "compression_ratio": 1.3137254901960784,
+            "no_speech_prob": 0.11289868503808975,
+            "prompt": [
+                  " Three soldiers standing in a destroyed city, determined to rebuild and stand firm"
+            ]
+      },
+      {
+            "id": 20,
+            "seek": 18800,
+            "start": 198.0,
+            "end": 205.0,
+            "text": " Where you go I go What you see I see",
+            "tokens": [
+                  50864,
+                  2305,
+                  291,
+                  352,
+                  286,
+                  352,
+                  708,
+                  291,
+                  536,
+                  286,
+                  536,
+                  51214
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.1802896885644822,
+            "compression_ratio": 1.3137254901960784,
+            "no_speech_prob": 0.11289868503808975,
+            "prompt": [
+                  " Two lovers embrace in front of a desolate wasteland as chaos descends"
+            ]
+      },
+      {
+            "id": 21,
+            "seek": 18800,
+            "start": 205.0,
+            "end": 211.0,
+            "text": " I know I'll never be me Without the security",
+            "tokens": [
+                  51214,
+                  286,
+                  458,
+                  286,
+                  603,
+                  1128,
+                  312,
+                  385,
+                  9129,
+                  264,
+                  3825,
+                  51514
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.1802896885644822,
+            "compression_ratio": 1.3137254901960784,
+            "no_speech_prob": 0.11289868503808975,
+            "prompt": [
+                  " Two best friends walking side by side, looking up at the sky, with their heads held high, and assuring each other that they will never"
+            ]
+      },
+      {
+            "id": 22,
+            "seek": 21100,
+            "start": 212.0,
+            "end": 218.0,
+            "text": " On your loving arms Keeping me from harm",
+            "tokens": [
+                  50414,
+                  1282,
+                  428,
+                  9344,
+                  5812,
+                  30187,
+                  385,
+                  490,
+                  6491,
+                  50714
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.2196700261986774,
+            "compression_ratio": 1.3529411764705883,
+            "no_speech_prob": 0.5919792056083679,
+            "prompt": [
+                  " Two children holding hands, running towards a distant horizon, with a lighthouse as their guide"
+            ]
+      },
+      {
+            "id": 23,
+            "seek": 21100,
+            "start": 218.0,
+            "end": 224.0,
+            "text": " Put your hand in my hand And we'll stand",
+            "tokens": [
+                  50714,
+                  4935,
+                  428,
+                  1011,
+                  294,
+                  452,
+                  1011,
+                  400,
+                  321,
+                  603,
+                  1463,
+                  51014
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.2196700261986774,
+            "compression_ratio": 1.3529411764705883,
+            "no_speech_prob": 0.5919792056083679,
+            "prompt": [
+                  " An open field with a person holding a shield, surrounded by a circle of friends who look up to them for protection"
+            ]
+      },
+      {
+            "id": 24,
+            "seek": 21100,
+            "start": 224.0,
+            "end": 230.0,
+            "text": " Let the sky fall When it crumbles",
+            "tokens": [
+                  51014,
+                  961,
+                  264,
+                  5443,
+                  2100,
+                  1133,
+                  309,
+                  941,
+                  12255,
+                  51314
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.2196700261986774,
+            "compression_ratio": 1.3529411764705883,
+            "no_speech_prob": 0.5919792056083679,
+            "prompt": [
+                  " A couple holding hands tightly and standing together, protection from the harsh world around them"
+            ]
+      },
+      {
+            "id": 25,
+            "seek": 21100,
+            "start": 230.0,
+            "end": 237.0,
+            "text": " We will stand tall We'll face it all together",
+            "tokens": [
+                  51314,
+                  492,
+                  486,
+                  1463,
+                  6764,
+                  492,
+                  603,
+                  1851,
+                  309,
+                  439,
+                  1214,
+                  51664
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.2196700261986774,
+            "compression_ratio": 1.3529411764705883,
+            "no_speech_prob": 0.5919792056083679,
+            "prompt": [
+                  " Two friends standing on a cliff, holding hands and looking out at the raging ocean waves crashing on the rocks below them"
+            ]
+      },
+      {
+            "id": 26,
+            "seek": 23700,
+            "start": 237.0,
+            "end": 243.0,
+            "text": " Let the sky fall When it crumbles",
+            "tokens": [
+                  50364,
+                  961,
+                  264,
+                  5443,
+                  2100,
+                  1133,
+                  309,
+                  941,
+                  12255,
+                  50664
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.26093387603759766,
+            "compression_ratio": 1.4125,
+            "no_speech_prob": 0.28963202238082886,
+            "prompt": [
+                  " A group of friends holding hands, standing shoulder to shoulder as they face a stormy sky"
+            ]
+      },
+      {
+            "id": 27,
+            "seek": 23700,
+            "start": 243.0,
+            "end": 248.0,
+            "text": " We will stand tall We'll face it all together",
+            "tokens": [
+                  50664,
+                  492,
+                  486,
+                  1463,
+                  6764,
+                  492,
+                  603,
+                  1851,
+                  309,
+                  439,
+                  1214,
+                  50914
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.26093387603759766,
+            "compression_ratio": 1.4125,
+            "no_speech_prob": 0.28963202238082886,
+            "prompt": [
+                  " Two soldiers standing tall in the midst of a war, staring adversity head-on"
+            ]
+      },
+      {
+            "id": 28,
+            "seek": 23700,
+            "start": 248.0,
+            "end": 252.0,
+            "text": " Let the sky fall",
+            "tokens": [
+                  50914,
+                  961,
+                  264,
+                  5443,
+                  2100,
+                  51114
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.26093387603759766,
+            "compression_ratio": 1.4125,
+            "no_speech_prob": 0.28963202238082886,
+            "prompt": [
+                  " Two soldiers standing tall amidst a raging storm, fists raised in determination"
+            ]
+      },
+      {
+            "id": 29,
+            "seek": 23700,
+            "start": 252.0,
+            "end": 257.0,
+            "text": " Let the sky fall",
+            "tokens": [
+                  51114,
+                  961,
+                  264,
+                  5443,
+                  2100,
+                  51364
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.26093387603759766,
+            "compression_ratio": 1.4125,
+            "no_speech_prob": 0.28963202238082886,
+            "prompt": [
+                  " A team of warriors standing tall, bracing for the sky to fall as they prepare to face anything"
+            ]
+      },
+      {
+            "id": 30,
+            "seek": 25700,
+            "start": 257.0,
+            "end": 261.0,
+            "text": " We'll stand tall",
+            "tokens": [
+                  50364,
+                  492,
+                  603,
+                  1463,
+                  6764,
+                  50564
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.34484251340230304,
+            "compression_ratio": 0.8529411764705882,
+            "no_speech_prob": 0.04310089349746704,
+            "prompt": [
+                  " A group of warriors standing tall and determined amidst a brutal storm, wind and rain battering their enemies"
+            ]
+      },
+      {
+            "id": 31,
+            "seek": 25700,
+            "start": 261.0,
+            "end": 273.0,
+            "text": " As sky falls",
+            "tokens": [
+                  50564,
+                  1018,
+                  5443,
+                  8804,
+                  51164
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.34484251340230304,
+            "compression_ratio": 0.8529411764705882,
+            "no_speech_prob": 0.04310089349746704,
+            "prompt": [
+                  " A group of friends standing firm on a hill, watching the sky fall to the ground"
+            ]
+      },
+      {
+            "id": 32,
+            "seek": 28700,
+            "start": 273.0,
+            "end": 289.320625,
+            "text": " As sky falls",
+            "tokens": [
+                  50364,
+                  1018,
+                  5443,
+                  8804,
+                  50864
+            ],
+            "temperature": 0.0,
+            "avg_logprob": -0.8813737233479818,
+            "compression_ratio": 0.6,
+            "no_speech_prob": 0.9890334606170654,
+            "prompt": [
+                  " A fearless warrior standing tall amidst a chaotic storm, thunderous clouds rolling in"
+            ]
+      }
+]
