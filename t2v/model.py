@@ -68,12 +68,7 @@ class Model(nn.Module):
                          generator=self.generator,
                          strength = 0.8,
                          **kwargs)
-        # self.pipe(prompt=prompt[frame_ids].tolist(),
-        #           negative_prompt=negative_prompt[frame_ids].tolist(),
-        #           latents=latents,
-        #           generator=self.generator,
-        #           strength=0.1,
-        #           **kwargs)
+
 
     def inference(self, split_to_chunks=False, chunk_size=8, **kwargs):
         if not hasattr(self, "pipe") or self.pipe is None:
@@ -122,10 +117,6 @@ class Model(nn.Module):
                                                    prompt=prompt,
                                                    negative_prompt=negative_prompt,
                                                    **kwargs)[0].images[1:])
-                # self.inference_chunk(frame_ids=frame_ids,
-                #                      prompt=prompt,
-                #                      negative_prompt=negative_prompt,
-                #                      **kwargs)
                 frames_counter += len(chunk_ids)-1
                 if on_huggingspace and frames_counter >= 80:
                     break
@@ -180,7 +171,7 @@ class Model(nn.Module):
                                 negative_prompt=negative_prompts,
                                 width=resolution,
                                 num_inference_steps=50,
-                                guidance_scale=7.5, #before it was 17.5
+                                guidance_scale=7.5,
                                 guidance_stop_step=1.0,
                                 t0=t0,
                                 t1=t1,

@@ -169,8 +169,7 @@ def main():
 
     # Load the transcription from whisper. We will use the large model
 
-    # whispers = whisper_transcribe(song_path,device)
-    # print(whispers)
+    whispers = whisper_transcribe(song_path,device)
 
     # with open('./timestamps/whispers.txt') as f:
     #     data = f.read()
@@ -181,97 +180,89 @@ def main():
 
     song_length = float(ffmpeg.probe(song_path)['format']['duration'])
 
-    # model_name = args.model_name
-    # dataset_dir = args.data_set_dir
-    #
-    # context_length = args.context_length
-    #
-    # #Load the hparams dict for the GPT2 model
-    # hparams = dotdict({})
-    # hparams.data_dir = dataset_dir
-    # hparams.model_name = model_name
-    # hparams.context_length = context_length
-    # hparams.batch_size = args.batch_size
-    # hparams.learning_rate = args.learning_rate
-    # if isinstance(args.device, list):
-    #     hparams.device = device1
-    # else:
-    #     hparams.device = device
-    # hparams.warmup_steps = args.warmup_steps
-    #
+    model_name = args.model_name
+    dataset_dir = args.data_set_dir
 
-    #
-    # model = GPT2LMHeadModel.from_pretrained(args.checkpoint)
-    # model.to(device)
-    # tokenizer = GPT2Tokenizer.from_pretrained('gpt2-medium')
-    # tokenizer.pad_token = tokenizer.eos_token
+    context_length = args.context_length
 
-    # tokenizer = model.tokenizer
-    # model = model.model
+    #Load the hparams dict for the GPT2 model
+    hparams = dotdict({})
+    hparams.data_dir = dataset_dir
+    hparams.model_name = model_name
+    hparams.context_length = context_length
+    hparams.batch_size = args.batch_size
+    hparams.learning_rate = args.learning_rate
+    if isinstance(args.device, list):
+        hparams.device = device1
+    else:
+        hparams.device = device
+    hparams.warmup_steps = args.warmup_steps
 
-    # if isinstance(args.device, list):
-    #     model.to(device1)
-    # else:
-    #     model.to(device)
-    #
-    # #Add the prompts to the trancriptions
-    # do_sample = True
-    # for i, lines in enumerate(whispers['large']['segments']):
-    #     lyric = lines['text']
-    #     prompt = generate_from_sentences([lyric], model, tokenizer, hparams.device, do_sample)[
-    #         0].replace(lyric, '')
-    #     print(prompt)
-    #     lines['prompt'] = prompt
-    #
-    # #Easier later on
-    # whispers = whispers['large']['segments']
-    # whisper_copy = whispers
-    #
-    # #Add start of the song if the lyrics don't start at the beginning
-    # x = {}
-    # if whispers[0]['start'] != 0.0:
-    #     x['start'] = 0.0
-    #     x['end'] = whispers[0]['start']
-    #     x['text'], x['prompt'] = " "," "
-    #     whispers.insert(0,x)
-    #
-    # #In case bugs exist towards the end of the transcriptions
-    # if whispers[-1]['end'] > song_length:
-    #     whispers[-1]['start'] = whispers[-2]['end']
-    #     whispers[-1]['end'] = song_length
-    #
-    # torch.cuda.empty_cache()
-    #
+
+
+    model = GPT2LMHeadModel.from_pretrained(args.checkpoint)
+    model.to(device)
+    tokenizer = GPT2Tokenizer.from_pretrained('gpt2-medium')
+    tokenizer.pad_token = tokenizer.eos_token
+
+    tokenizer = model.tokenizer
+    model = model.model
+    model.to(device)
+
+    #Add the prompts to the trancriptions
+    do_sample = True
+    for i, lines in enumerate(whispers['large']['segments']):
+        lyric = lines['text']
+        prompt = generate_from_sentences([lyric], model, tokenizer, hparams.device, do_sample)[
+            0].replace(lyric, '')
+        print(prompt)
+        lines['prompt'] = prompt
+
+    #Easier later on
+    whispers = whispers['large']['segments']
+    whisper_copy = whispers
+
+    #Add start of the song if the lyrics don't start at the beginning
+    x = {}
+    if whispers[0]['start'] != 0.0:
+        x['start'] = 0.0
+        x['end'] = whispers[0]['start']
+        x['text'], x['prompt'] = " "," "
+        whispers.insert(0,x)
+
+    #In case bugs exist towards the end of the transcriptions
+    if whispers[-1]['end'] > song_length:
+        whispers[-1]['start'] = whispers[-2]['end']
+        whispers[-1]['end'] = song_length
+
+    torch.cuda.empty_cache()
+
     # if not os.path.exists(args.timestamps):
     #     os.makedirs(args.timestamps)
+    #
     # print(os.path.join(args.timestamps,song_name.split('.')[0]+'.txt'))
+    #
     # with open(os.path.join(args.timestamps,song_name.split('.')[0]+'.txt'), "w") as output:
     #     output.write(str(whispers))
 
 
-    # whispers_save = []
-    # for i, lines in enumerate(whispers):
-    #     x = {}
-    #     x['start'] = lines['start']
-    #     x['end'] = lines['end']
-    #     x['text'] = lines['text']
-    #     x['prompt'] = lines['prompt']
-    #     whispers_save.append(x)
-    #     print(lines["text"], " ", lines["prompt"])
-    #
-    #
-    # if not os.path.exists(args.timestamps):
-    #     os.makedirs(args.timestamps)
-    # print(os.path.join(args.timestamps,song_name.split('.')[0]+'.txt'))
-    # with open(os.path.join(args.timestamps,song_name.split('.')[0]+'.txt'), "w") as output:
-    #     output.write(str(whispers_save))
+    whispers_save = []
+    for i, lines in enumerate(whispers):
+        x = {}
+        x['start'] = lines['start']
+        x['end'] = lines['end']
+        x['text'] = lines['text']
+        x['prompt'] = lines['prompt']
+        whispers_save.append(x)
+        print(lines["text"], " ", lines["prompt"])
 
 
-    with open('../timestamps/thunder.txt') as f:
-        data = f.read()
+    if not os.path.exists(args.timestamps):
+        os.makedirs(args.timestamps)
+    print(os.path.join(args.timestamps,song_name.split('.')[0]+'.txt'))
+    with open(os.path.join(args.timestamps,song_name.split('.')[0]+'.txt'), "w") as output:
+        output.write(str(whispers_save))
 
-        # reconstructing the data as a dictionary
-    whispers = ast.literal_eval(data)
 
     #Load the stable diffusion img2img and text2img models
     model_id = args.diffusion_model
@@ -519,6 +510,5 @@ def main():
     create_video_from_images(image_files, song_path, video_path, args.fps)
 
 if __name__ == '__main__':
-    fire.Fire(main)
     fire.Fire(main)
 

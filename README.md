@@ -32,7 +32,7 @@ TODO:
 3. Add HuggingFace page if available
 4. Refactor chatgpt, chatgpt_run and genius to one folder called lyric_canvas?
 5. Remove .sh files
- 
+6. When we deploy, we should change to Hazel1994/vipe
  -----------------
 ## 🦾 Updates
 ## 🗄 Code Structure
@@ -52,7 +52,7 @@ TODO:
 1. Path to the retrieval files. All 4 pickle files and the images for train and eval. Upload to cloud.
 
 ### HAIVMet
-We stack ViPE against human annotators in understanding and visualising figurative speech. To that end, we refer to [tuhinjubcse/VisualMetaphors](https://github.com/tuhinjubcse/VisualMetaphors). To download the dataset, please follow their instructions.    
+We stack ViPE against human annotators in understanding and visualising figurative speech. To that end, we refer to [VisualMetaphors](https://github.com/tuhinjubcse/VisualMetaphors). To download the dataset, please follow their instructions.    
 
 The ```datasets``` folder should have the following structure
 ```
@@ -89,7 +89,12 @@ We conduct vigorous image-text retrieval using the [BLIP model](https://github.c
 python3 evaluation/retrieval/evaluation.py --dataset <haivmet/vipe/chatgpt> --output_dir <path/to/store/checkpoints> --id_type <metaphor/prompt>
 ```
 ## 📹 Music Video Generation
-Music Video Generation strategy as used in our paper. For an updated version, please refer to [this repository](https://github.com/Hazel1994/ViPE-Videos).
+Music Video Generation strategy as used in our paper. For an updated version, please refer to [ViPE-Videos](https://github.com/Hazel1994/ViPE-Videos).
 ## 📑 Citation
 
 If you found this repository useful, please consider citing:
+
+## 👨‍🏫 Acknowledgements
+We refer to portions of the implementations of the following for parts of our research: 
+
+- [Text2Video-Zero](https://github.com/Picsart-AI-Research/Text2Video-Zero)
