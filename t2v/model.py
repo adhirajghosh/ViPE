@@ -20,7 +20,6 @@ class ModelType(Enum):
 class Model(nn.Module):
     def __init__(self, device, dtype, **kwargs):
         self.device = device
-        print(self.device)
         self.dtype = dtype
         self.generator = torch.Generator(device=device)
         self.pipe_dict = {
@@ -165,7 +164,7 @@ class Model(nn.Module):
         negative_prompts = 'bad anatomy,distorted face, disfiguired, bad hands, missing fingers, nude, naked, text, digits, worst quality, blurry, morbid, poorly drawn face, cropped, deformed body, bloated, ugly, unrealistic'
 
 
-        result, latent = self.inference(prompt=prompt,
+        result, latent = self.inference(prompt=prompt+added_prompt,
                                 video_length=video_length,
                                 height=resolution,
                                 negative_prompt=negative_prompts,

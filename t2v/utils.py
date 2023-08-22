@@ -11,9 +11,7 @@ from einops import rearrange
 import cv2
 from PIL import Image
 import decord
-from moviepy.editor import VideoFileClip, concatenate_videoclips
 from moviepy.editor import ImageSequenceClip
-from moviepy.editor import concatenate_videoclips
 from moviepy.editor import AudioFileClip
 import whisper
 
@@ -31,8 +29,6 @@ def create_video(frames, fps, rescale=False, path=None, watermark=None):
             x = (x + 1.0) / 2.0  # -1,1 -> 0,1
         x = (x * 255).numpy().astype(np.uint8)
 
-        if watermark is not None:
-            x = add_watermark(x, watermark)
         outputs.append(x)
         # imageio.imsave(os.path.join(dir, os.path.splitext(name)[0] + f'_{i}.jpg'), x)
 
@@ -66,8 +62,6 @@ def create_gif(frames, fps, rescale=False, path=None, watermark=None):
         if rescale:
             x = (x + 1.0) / 2.0  # -1,1 -> 0,1
         x = (x * 255).numpy().astype(np.uint8)
-        if watermark is not None:
-            x = add_watermark(x, watermark)
         outputs.append(x)
         # imageio.imsave(os.path.join(dir, os.path.splitext(name)[0] + f'_{i}.jpg'), x)
 
@@ -117,61 +111,7 @@ def post_process_gif(list_of_results, image_resolution):
     imageio.mimsave(output_file, list_of_results, fps=4)
     return output_file
 
-class dotdict(dict):
-    """dot.notation access to dictionary attributes"""
-    __getattr__ = dict.get
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
 
-
-class CrossFrameAttnProcessor:
-    def __init__(self, unet_chunk_size=2):
-        self.unet_chunk_size = unet_chunk_size
-
-    def __call__(
-            self,
-            attn,
-            hidden_states,
-            encoder_hidden_states=None,
-            attention_mask=None):
-        batch_size, sequence_length, _ = hidden_states.shape
-        attention_mask = attn.prepare_attention_mask(attention_mask, sequence_length, batch_size)
-        query = attn.to_q(hidden_states)
-
-        is_cross_attention = encoder_hidden_states is not None
-        if encoder_hidden_states is None:
-            encoder_hidden_states = hidden_states
-        elif attn.cross_attention_norm:
-            encoder_hidden_states = attn.norm_cross(encoder_hidden_states)
-        key = attn.to_k(encoder_hidden_states)
-        value = attn.to_v(encoder_hidden_states)
-        # Sparse Attention
-        if not is_cross_attention:
-            video_length = key.size()[0] // self.unet_chunk_size
-            # former_frame_index = torch.arange(video_length) - 1
-            # former_frame_index[0] = 0
-            former_frame_index = [0] * video_length
-            key = rearrange(key, "(b f) d c -> b f d c", f=video_length)
-            key = key[:, former_frame_index]
-            key = rearrange(key, "b f d c -> (b f) d c")
-            value = rearrange(value, "(b f) d c -> b f d c", f=video_length)
-            value = value[:, former_frame_index]
-            value = rearrange(value, "b f d c -> (b f) d c")
-
-        query = attn.head_to_batch_dim(query)
-        key = attn.head_to_batch_dim(key)
-        value = attn.head_to_batch_dim(value)
-
-        attention_probs = attn.get_attention_scores(query, key, attention_mask)
-        hidden_states = torch.bmm(attention_probs, value)
-        hidden_states = attn.batch_to_head_dim(hidden_states)
-
-        # linear proj
-        hidden_states = attn.to_out[0](hidden_states)
-        # dropout
-        hidden_states = attn.to_out[1](hidden_states)
-
-        return hidden_states
 
 def song_to_list(path):
     with open(path) as f:
@@ -187,26 +127,26 @@ def song_to_list(path):
             stanza.append(i[:-1])
     return full_song
 
-def merge_mp4(folder_path, output_path):
-
-    # Get the list of MP4 files in the folder
-    file_list = os.listdir(folder_path)
-    file_list = [file for file in file_list if file.endswith('.mp4')]
-
-    # Create a list to store the video clips
-    video_clips = []
-
-    # Iterate over the MP4 files and load them as video clips
-    for file in file_list:
-        file_path = os.path.join(folder_path, file)
-        video_clip = VideoFileClip(file_path)
-        video_clips.append(video_clip)
-
-    # Concatenate the video clips into a single video
-    final_video = concatenate_videoclips(video_clips)
-
-    # Write the final merged video to the output file
-    final_video.write_videofile(output_path, codec='libx264')
+# def merge_mp4(folder_path, output_path):
+#
+#     # Get the list of MP4 files in the folder
+#     file_list = os.listdir(folder_path)
+#     file_list = [file for file in file_list if file.endswith('.mp4')]
+#
+#     # Create a list to store the video clips
+#     video_clips = []
+#
+#     # Iterate over the MP4 files and load them as video clips
+#     for file in file_list:
+#         file_path = os.path.join(folder_path, file)
+#         video_clip = VideoFileClip(file_path)
+#         video_clips.append(video_clip)
+#
+#     # Concatenate the video clips into a single video
+#     final_video = concatenate_videoclips(video_clips)
+#
+#     # Write the final merged video to the output file
+#     final_video.write_videofile(output_path, codec='libx264')
 
 
 def create_video_from_images(images, audio_file, output_file, fps):
@@ -289,5 +229,80 @@ def whisper_transcribe(
         # print(f"elapsed: {time.time() - start}")
     return whispers
 
+def img2emb(pipe, image, seed, device):
+    # transform = transforms.Compose([
+    #     transforms.PILToTensor()
+    # ])
+    generator = torch.Generator(device=device).manual_seed(seed)
+    # image = transform(image).to(device, dtype=torch.float32)
+    if isinstance(image, Image.Image):
+        image = [image]
+
+    if isinstance(image[0], Image.Image):
+        w, h = image[0].size
+        w, h = (x - x % 8 for x in (w, h))  # resize to integer multiple of 8
+
+        image = [np.array(i.resize((w, h), resample= Image.Resampling.BICUBIC))[None, :] for i in image]
+        image = np.concatenate(image, axis=0)
+        image = np.array(image).astype(np.float32) / 255.0
+        image = image.transpose(0, 3, 1, 2)
+        image = 2.0 * image - 1.0
+        image = torch.from_numpy(image).to(device)
+    init_latents = pipe.vae.encode(image).latent_dist.sample(generator)
+    return init_latents.to(device)
+
+class dotdict(dict):
+    """dot.notation access to dictionary attributes"""
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
 
 
+class CrossFrameAttnProcessor:
+    def __init__(self, unet_chunk_size=2):
+        self.unet_chunk_size = unet_chunk_size
+
+    def __call__(
+            self,
+            attn,
+            hidden_states,
+            encoder_hidden_states=None,
+            attention_mask=None):
+        batch_size, sequence_length, _ = hidden_states.shape
+        attention_mask = attn.prepare_attention_mask(attention_mask, sequence_length, batch_size)
+        query = attn.to_q(hidden_states)
+
+        is_cross_attention = encoder_hidden_states is not None
+        if encoder_hidden_states is None:
+            encoder_hidden_states = hidden_states
+        elif attn.cross_attention_norm:
+            encoder_hidden_states = attn.norm_cross(encoder_hidden_states)
+        key = attn.to_k(encoder_hidden_states)
+        value = attn.to_v(encoder_hidden_states)
+        # Sparse Attention
+        if not is_cross_attention:
+            video_length = key.size()[0] // self.unet_chunk_size
+            # former_frame_index = torch.arange(video_length) - 1
+            # former_frame_index[0] = 0
+            former_frame_index = [0] * video_length
+            key = rearrange(key, "(b f) d c -> b f d c", f=video_length)
+            key = key[:, former_frame_index]
+            key = rearrange(key, "b f d c -> (b f) d c")
+            value = rearrange(value, "(b f) d c -> b f d c", f=video_length)
+            value = value[:, former_frame_index]
+            value = rearrange(value, "b f d c -> (b f) d c")
+
+        query = attn.head_to_batch_dim(query)
+        key = attn.head_to_batch_dim(key)
+        value = attn.head_to_batch_dim(value)
+
+        attention_probs = attn.get_attention_scores(query, key, attention_mask)
+        hidden_states = torch.bmm(attention_probs, value)
+        hidden_states = attn.batch_to_head_dim(hidden_states)
+
+        # linear proj
+        hidden_states = attn.to_out[0](hidden_states)
+        # dropout
+        hidden_states = attn.to_out[1](hidden_states)
+
+        return hidden_states

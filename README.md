@@ -90,6 +90,10 @@ python3 evaluation/retrieval/evaluation.py --dataset <haivmet/vipe/chatgpt> --ou
 ```
 ## 📹 Music Video Generation
 Music Video Generation strategy as used in our paper. For an updated version, please refer to [ViPE-Videos](https://github.com/Hazel1994/ViPE-Videos).
+```bash
+python3 ./t2v/create_video.py --img_size 100 --outdir ./results/vids/finalise/ --fps 2
+```
+
 ## 📑 Citation
 
 If you found this repository useful, please consider citing:
