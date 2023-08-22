@@ -1,6 +1,6 @@
 import pandas as pd
 from tqdm import tqdm
-data=pd.read_csv('/graphics/scratch2/staff/Hassan/genius_crawl/lyrics_to_prompts.csv')
+data=pd.read_csv('/graphics/scratch2/staff/hassan/genuis_chatgpt/lyric_canvas.csv')
 
 ll=[]
 pl=[]

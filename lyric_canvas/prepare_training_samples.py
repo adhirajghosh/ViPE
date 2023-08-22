@@ -36,7 +36,7 @@ def gpt_id_simple(gpt_ids):
 
 lyric_path='/graphics/scratch2/staff/Hassan/genius_crawl/'
 prompt_path = '/graphics/scratch2/staff/Hassan/chatgpt_data_v2.0/'
-ds_path = "/graphics/scratch2/staff/Hassan/genius_crawl/lyric_canvas.csv"
+ds_path = "/graphics/scratch2/staff/Hassan/genius_crawl/lyrics_to_prompts.csv"
 
 data={}
 file = lyric_path+"dataset_50.pickle"
