@@ -23,7 +23,7 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--data_set_dir", type=str, default='/graphics/scratch2/staff/Hassan/genius_crawl/lyrics_to_prompts_v2.0.csv', help='path to the trainign data'
+        "--data_set_dir", type=str, default='/graphics/scratch2/staff/Hassan/genius_crawl/lyrics_to_prompts_v2.0.csv', help='path to the training data'
     )
     parser.add_argument(
         "--check_path", type=str, default='/graphics/scratch2/staff/Hassan/checkpoints/lyrics_to_prompts/', help="path to save the model"
