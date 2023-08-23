@@ -11,8 +11,7 @@ from einops import rearrange
 import cv2
 from PIL import Image
 import decord
-from moviepy.editor import ImageSequenceClip
-from moviepy.editor import AudioFileClip
+# from moviepy.editor import ImageSequenceClip, AudioFileClip
 import whisper
 
 
