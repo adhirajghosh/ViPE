@@ -110,8 +110,6 @@ def main():
     device = args.device
     pipe = StableDiffusionPipeline.from_pretrained(model_id).to(device)
 
-    folder_dict = zip_process(os.path.join(args.datadir, args.dataset + '.zip'))
-    ds_id = dataset_dict[args.dataset]
 
     if not os.path.exists(args.savedir + 'prompt_dict_{}.pickle'.format(args.model)):
         create_dataset_pickle(args)
@@ -125,12 +123,22 @@ def main():
     if not os.path.exists(image_path):
         os.makedirs(image_path)
 
-    subset = {}
-    for j in folder_dict.keys():
-        info = prompt_dict[j]
-        subset[j] = info
+    if args.dataset == 'all':
+        datasets = ['ad_slogans','bizzoni','copoet','figqa','flute','tsvetkov']
+    else:
+        datasets = [args.dataset]
 
-    generate_images(pipe, subset, ds_id, image_path, batch_size, args.img_size, args.num_images, device)
+    for dataset in datasets:
+
+        folder_dict = zip_process(os.path.join(args.datadir, dataset + '.zip'))
+        ds_id = dataset_dict[dataset]
+
+        subset = {}
+        for j in folder_dict.keys():
+            info = prompt_dict[j]
+            subset[j] = info
+
+        generate_images(pipe, subset, ds_id, image_path, batch_size, args.img_size, args.num_images, device)
 
 if __name__ == '__main__':
     main()
