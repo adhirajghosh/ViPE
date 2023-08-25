@@ -11,6 +11,7 @@ from profanity_check import predict_prob
 import pandas as pd
 from torch.utils.data import DataLoader
 import json
+import matplotlib.pylab as plt
 
 
 def parse_args():
@@ -103,10 +104,39 @@ def main():
     chatgpt_scores = predict_prob(chatgpt_prompts)
     gpt2_scores = predict_prob(gpt2_prompts)
 
+    # Concatenate all scores
     results = {'Lyrics': lyric_scores, 'GPT3.5': chatgpt_scores, 'ViPE-M': vipe_scores, 'GPT2-M': gpt2_scores}
 
+    # Define bins
+    bins = np.linspace(0, 1, 6)
+
+    line_styles = ['-', '--',':', '-.']
+
+    # Calculate means for other lists based on the indices from the first list
+    for idx, (method, scores) in enumerate(results.items()):
+            bin_means = []
+            for i in range(len(bins) - 1):
+                indices = (lyric_scores > bins[i]) & (lyric_scores <= bins[i + 1])
+                mean_value = np.mean(scores[indices])
+                bin_means.append(mean_value)
+            plt.plot(bin_means, label=method, linestyle=line_styles[idx % len(line_styles)])
+
+    # for method, scores in results.items():
+    #         bin_means = []
+    #         for i in range(len(bins) - 1):
+    #             indices = (lyric_scores > bins[i]) & (lyric_scores <= bins[i + 1])
+    #             mean_value = np.mean(scores[indices])
+    #             bin_means.append(mean_value)
+    #         plt.plot(bin_means, label=method)
+
+    # Add labels and title
+    plt.xlabel('Profanity Intervals')
+    plt.ylabel('Mean Value')
+    #plt.title('Mean Values in Bins for Different Methods (Based on Lyrics)')
+    plt.xticks(range(5), ['(0, 0.2]', '(0.2, 0.4]', '(0.4, 0.6]', '(0.6, 0.8]', '(0.8, 1.0]'])
+    plt.legend()
+    plt.show()
     # data = np.vstack([v for _,v in results.items()]).T
-    #
     # sns.violinplot(data=data)
     # plt.xticks([0, 1, 2, 3], list(results.keys()))
     # plt.ylabel('Scores')
