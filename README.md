@@ -17,7 +17,7 @@
 
 
 <div style="text-align:center">
-<img src="https://i.postimg.cc/PJzrhKqd/vipe.png"  width="90%" height="100%">
+<img src="./media/teaser.png"  width="90%" height="100%">
 </div>
 
 ### [Project Page](https://adhirajghosh.github.io/) | [ViPE Paper](https://arxiv.org/abs/2305.03726)  | [LyricCanvas Dataset](https://adhirajghosh.github.io/)
