@@ -11,7 +11,7 @@
     </br>
 </div>
 <div align="center">
-    Tübingen AI Center, University of Tübingen&emsp;
+    <a href='https://uni-tuebingen.de/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/fachbereiche/informatik/lehrstuehle/computergrafik/lehrstuhl/'> Computer Graphics Group, University of Tübingen </a>&emsp;
     </br>
     <sup>&#x2709</sup> Corresponding Author
 
