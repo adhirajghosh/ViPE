@@ -12,9 +12,7 @@
 </div>
 <div align="center">
     <a href='https://uni-tuebingen.de/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/fachbereiche/informatik/lehrstuehle/computergrafik/lehrstuhl/'> Computer Graphics Group, University of Tübingen </a>&emsp;
-    </br>
-    <sup>&#x2709</sup> Corresponding Author
-
+ 
 
 <div style="text-align:center">
 <img src="./media/teaser.png"  width="50%" height="50%">
