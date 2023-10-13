@@ -18,9 +18,9 @@
 <img src="./media/teaser.png"  width="50%" height="50%">
 </div>
 
-### [Project Page](https://adhirajghosh.github.io/) | [ViPE Paper](https://arxiv.org/abs/2305.03726)  | [LyricCanvas Dataset](https://adhirajghosh.github.io/)
+### [ViPE Paper](https://arxiv.org/abs/2305.03726) | [ViPE Videos](https://arxiv.org/abs/2305.03726)  | [LyricCanvas Dataset](https://adhirajghosh.github.io/)
 
-<a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-ee4c2c?logo=pytorch&logoColor=white"></a>
+<!--- <a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-ee4c2c?logo=pytorch&logoColor=white"></a> -->
 
 </div>
 
