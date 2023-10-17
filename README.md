@@ -23,6 +23,7 @@
 <!--- <a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-ee4c2c?logo=pytorch&logoColor=white"></a> -->
 
 </div>
+
 # Project Under Construction
 
 **Note:** This repository is currently under construction and not yet completed. It is a work in progress, and changes are being made regularly. 
@@ -31,7 +32,7 @@ Please feel free to check back later for updates or follow/watch this repository
 
 Thank you for your patience!
 
-# This repository is 
+
 TODO: 
 1. Correct all the links. 
 2. Add Video generation website 
