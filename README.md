@@ -23,16 +23,22 @@
 <!--- <a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-ee4c2c?logo=pytorch&logoColor=white"></a> -->
 
 </div>
+# Project Under Construction
 
+**Note:** This repository is currently under construction and not yet completed. It is a work in progress, and changes are being made regularly. 
+
+Please feel free to check back later for updates or follow/watch this repository to receive notifications when it's ready for use.
+
+Thank you for your patience!
+
+# This repository is 
 TODO: 
 1. Correct all the links. 
 2. Add Video generation website 
 3. Add HuggingFace page if available
 4. Refactor chatgpt, chatgpt_run and genius to one folder called lyric_canvas?
 5. Remove .sh files
-6. When we deploy, we should change to Hazel1994/vipe
  -----------------
-## 🦾 Updates
 ## 🗄 Code Structure
 
 ```
@@ -95,6 +101,23 @@ python3 ./t2v/create_video.py --img_size 100 --outdir ./results/vids/finalise/ -
 ## 📑 Citation
 
 If you found this repository useful, please consider citing:
+```
+@inproceedings{shahmohammadi2023vipe,
+    title = "ViPE: Visualise Pretty-much Everything",
+    author = "Hassan Shahmohammadi and Adhiraj Ghosh and Hendrik P. A. Lensch",
+    booktitle = "Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing",
+    month = dec,
+    year = "2023",
+    address = "Singapore",
+    publisher = "Association for Computational Linguistics",
+    url = "https://arxiv.org/abs/2310.10543",
+    eprint={2310.10543},
+    archivePrefix={arXiv},
+    primaryClass={cs.CL}
+    doi = "",
+    pages = ""
+}
+```
 
 ## 👨‍🏫 Acknowledgements
 We refer to portions of the implementations of the following for parts of our research: 
