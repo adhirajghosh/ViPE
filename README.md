@@ -18,7 +18,7 @@
 <img src="./media/teaser.png"  width="50%" height="50%">
 </div>
 
-### [ViPE Paper](https://arxiv.org/abs/2310.10543) | [ViPE Videos]()  | [LyricCanvas Dataset]() | [Use in Huggingface](https://huggingface.co/fittar/ViPE-M-CTX7) | [Prompt Generation Demo](https://huggingface.co/spaces/fittar/ViPE)
+### [ViPE Paper](https://arxiv.org/abs/2310.10543) | [ViPE Videos](https://github.com/Hazel1994/ViPE-Videos)  | [LyricCanvas Dataset]() | [Use in Huggingface](https://huggingface.co/fittar/ViPE-M-CTX7) | [Prompt Generation Demo](https://huggingface.co/spaces/fittar/ViPE)
 
 <!--- <a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-ee4c2c?logo=pytorch&logoColor=white"></a> -->
 
